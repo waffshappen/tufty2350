@@ -1,0 +1,5 @@
+*.py
+*.af
+books/*.txt
+examples/*.py
+images/*.*
