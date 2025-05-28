@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${PIMORONI_PICO_PATH}/micropython")
 # All regular modules
 list(APPEND CMAKE_MODULE_PATH "${PIMORONI_PICO_PATH}/micropython/modules")
 
-# Allows us to find downstream /cmodules/
+# Allows us to find downstream /modules/c/*/
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 
 set(CMAKE_C_STANDARD 11)
@@ -46,6 +46,8 @@ include(servo/micropython)
 include(encoder/micropython)
 include(motor/micropython)
 
+# Sleep / Wake Reason
+include(modules/c/powman/micropython)
 
 # Still required for version.py
 include(modules_py/modules_py)
