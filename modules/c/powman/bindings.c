@@ -59,14 +59,14 @@ mp_obj_t _sleep_goto_dormant_until_pin(size_t n_args, const mp_obj_t *args) {
     powman_init();
 
     if (pin != UINT16_MAX) {
-        powman_setup_gpio_wakeup(pin, edge, high, 1000);
+        powman_setup_gpio_wakeup(POWMAN_WAKE_PWRUP0_CH, pin, edge, high, 1000);
     } else {
         int err = 0;
-        err = powman_setup_gpio_wakeup(12, edge, high, 1000); // Tufty Button A
+        err = powman_setup_gpio_wakeup(POWMAN_WAKE_PWRUP0_CH, 12, edge, high, 1000); // Tufty Button A
         if (err == -1) {mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Timeout waiting for Button A"));}
-        err = powman_setup_gpio_wakeup(13, edge, high, 1000); // Tufty Button B
+        err = powman_setup_gpio_wakeup(POWMAN_WAKE_PWRUP1_CH, 13, edge, high, 1000); // Tufty Button B
         if (err == -1) {mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Timeout waiting for Button B"));}
-        err = powman_setup_gpio_wakeup(14, edge, high, 1000); // Tufty Button C
+        err = powman_setup_gpio_wakeup(POWMAN_WAKE_PWRUP2_CH, 14, edge, high, 1000); // Tufty Button C
         if (err == -1) {mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Timeout waiting for Button C"));}
     }
 

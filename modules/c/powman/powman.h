@@ -15,6 +15,9 @@
 #include "hardware/flash.h"
 #include "hardware/structs/qmi.h"
 
+#define POWMAN_WAKE_PWRUP0_CH 0
+#define POWMAN_WAKE_PWRUP1_CH 1
+#define POWMAN_WAKE_PWRUP2_CH 2
 
 #define POWMAN_WAKE_RESET  0b00000001
 #define POWMAN_WAKE_PWRUP0 0b00000010
@@ -30,5 +33,5 @@ int powman_off_for_ms(uint64_t duration_ms);
 uint8_t powman_get_wake_reason(void);
 
 void powman_init();
-int powman_setup_gpio_wakeup(int gpio, bool edge, bool high, uint64_t timeout_ms);
+int powman_setup_gpio_wakeup(int hw_wakeup, int gpio, bool edge, bool high, uint64_t timeout_ms);
 int powman_off(void);

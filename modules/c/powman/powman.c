@@ -97,7 +97,7 @@ int __no_inline_not_in_flash_func(powman_off)(void) {
     while (true) __wfi();
 }
 
-int powman_setup_gpio_wakeup(int gpio, bool edge, bool high, uint64_t timeout_ms) {
+int powman_setup_gpio_wakeup(int hw_wakeup, int gpio, bool edge, bool high, uint64_t timeout_ms) {
     gpio_init(gpio);
     gpio_set_dir(gpio, false);
     gpio_set_input_enabled(gpio, true);
@@ -113,7 +113,7 @@ int powman_setup_gpio_wakeup(int gpio, bool edge, bool high, uint64_t timeout_ms
             if(time_reached(timeout)) return -1;
         }
     }
-    powman_enable_gpio_wakeup(0, gpio, edge, high);
+    powman_enable_gpio_wakeup(hw_wakeup, gpio, edge, high);
 
     return 0;
 }
@@ -122,7 +122,7 @@ int powman_setup_gpio_wakeup(int gpio, bool edge, bool high, uint64_t timeout_ms
 int powman_off_until_gpio_high(int gpio, bool edge, bool high, uint64_t timeout_ms) {
     powman_init();
 
-    powman_setup_gpio_wakeup(gpio, edge, high, 1000);
+    powman_setup_gpio_wakeup(POWMAN_WAKE_PWRUP0_CH, gpio, edge, high, 1000);
 
     if (timeout_ms > 0) {
         uint64_t ms = powman_timer_get_ms();
