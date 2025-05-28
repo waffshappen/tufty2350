@@ -1,6 +1,7 @@
 import machine
 from picographics import PicoGraphics, DISPLAY_EXPLORER
 import cppmem
+import powman
 
 BUTTON_DOWN = 11
 BUTTON_A = 12
@@ -8,6 +9,8 @@ BUTTON_B = 13
 BUTTON_C = 14
 BUTTON_UP = 15
 BUTTON_USER = 22
+
+BUTTON_MASK = 0b11111 << 11
 
 SYSTEM_VERY_SLOW = 0
 SYSTEM_SLOW = 1
@@ -43,6 +46,21 @@ cppmem.set_mode(cppmem.MICROPYTHON)
 
 def is_wireless():
     return True
+
+
+def woken_by_button():
+    return powman.get_wake_reason() in [0, 1, 2]
+
+
+def pressed_to_wake(button):
+    try:
+        return [12, 13, 14].index(button) == powman.get_wake_reason()
+    except ValueError:
+        raise KeyError("Button not valid for device wake function!") from None
+
+
+def woken_by_reset():
+    return powman.get_wake_reason() == 255
 
 
 def system_speed(speed):
@@ -84,3 +102,7 @@ class Tufty2350():
             if button.value() == 0:
                 return True
         return False
+
+    def sleep(self):
+        self.display.set_backlight(0)
+        powman.goto_dormant_until_pin(None, False, False)
