@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
+#include <math.h>
 #include "pico/stdio.h"
 #include "pico/sync.h"
 #include "hardware/gpio.h"
@@ -17,6 +18,7 @@
 #include "hardware/structs/qmi.h"
 #include "hardware/i2c.h"
 #include "hardware/resets.h"
+#include "hardware/pwm.h"
 
 // For machine_pin_find
 #include "machine_pin.h"
