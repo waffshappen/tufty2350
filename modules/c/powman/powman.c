@@ -121,8 +121,6 @@ void pcf85063_wakeup_init(uint8_t period) {
 void powman_init() {
     uint64_t abs_time_ms = 1746057600000; // 2025/05/01 - Milliseconds since epoch
 
-    clear_double_tap_flag();
-
     // Run everything from pll_usb pll and stop pll_sys
     set_sys_clock_48mhz();
 
@@ -336,7 +334,7 @@ static inline void setup_gpio(bool buttons_only) {
     // Init the charge status detect
     gpio_init(BW_CHARGE_STAT);
     gpio_set_dir(BW_CHARGE_STAT, GPIO_IN);
-    gpio_set_pulls(BW_CHARGE_STAT, false, false);
+    gpio_set_pulls(BW_CHARGE_STAT, true, false);
 
     // Set up LEDs
     gpio_init_mask(0b1111);
@@ -364,6 +362,8 @@ static inline void latch_inputs(void) {
 static inline void setup_system(void) {
     i2c_enable();
     pcf85063_disable_interrupt();
+    vreg_set_voltage(VREG_VOLTAGE_1_20);
+    sleep_ms(10);
 }
 
 static int64_t alarm_clear_double_tap(alarm_id_t id, __unused void *user_data) {
