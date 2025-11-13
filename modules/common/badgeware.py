@@ -1,42 +1,56 @@
 import gc
 import json
 import os
+import io as stream
 import sys
 import time
 import pcf85063a
 
 import machine
-import micropython
 import powman
-from picovector import ANTIALIAS_BEST, PicoVector, Polygon, Transform, HALIGN_CENTER   # noqa F401
+import st7789
+from picovector import brushes, shapes, screen, PixelFont, io, Image, Matrix  # noqa F401
 from math import floor
 
-board = os.uname().machine.split(" ")[1]
 
-if board == "Tufty":
-
-    from picographics import DISPLAY_TUFTY_2350, PicoGraphics
-    display = PicoGraphics(DISPLAY_TUFTY_2350)
-
-    LIGHT_SENSOR = machine.ADC(machine.Pin("LIGHT_SENSE"))
-
-    def get_light():
-        # TODO: Returning the raw u16 is a little meh here, can we do an approx lux conversion?
-        return LIGHT_SENSOR.read_u16()
-
-elif board == "Badger":
-    pass
-elif board == "Blinky":
-    pass
-
-WIDTH, HEIGHT = display.get_bounds()
-
-# Pico Vector
-vector = PicoVector(display)
-vector.set_antialiasing(ANTIALIAS_BEST)
+ASSETS = "/system/assets"
+LIGHT_SENSOR = machine.ADC(machine.Pin("LIGHT_SENSE"))
+WIDTH, HEIGHT = screen.width, screen.height
+DEFAULT_FONT = PixelFont.load(f"{ASSETS}/fonts/sins.ppf")
+ERROR_FONT = PixelFont.load(f"{ASSETS}/fonts/desert.ppf")
 
 # RTC
 rtc = pcf85063a.PCF85063A(machine.I2C())
+display = st7789.ST7789()
+screen.font = DEFAULT_FONT
+
+
+class Colors:
+    GREEN_1 = brushes.color(86, 211, 100)
+    GREEN_2 = brushes.color(46, 160, 67)
+    GREEN_3 = brushes.color(25, 108, 46)
+    GREEN_4 = brushes.color(3, 58, 22)
+    GRAY_1 = brushes.color(242, 245, 243)
+    GRAY_2 = brushes.color(228, 235, 230)
+    GRAY_3 = brushes.color(182, 191, 184)
+    GRAY_4 = brushes.color(144, 150, 146)
+    GRAY_5 = brushes.color(35, 41, 37)
+    GRAY_6 = brushes.color(16, 20, 17)
+
+    BLACK = brushes.color(0, 0, 0)
+    WHITE = brushes.color(255, 255, 255)
+
+    RED = brushes.color(255, 0, 0)
+    YELLOW = brushes.color(255, 255, 0)
+    GREEN = brushes.color(0, 255, 0)
+    TEAL = brushes.color(0, 255, 255)
+    BLUE = brushes.color(0, 0, 255)
+    PURPLE = brushes.color(255, 0, 255)
+
+
+def get_light():
+    # TODO: Returning the raw u16 is a little meh here, can we do an approx lux conversion?
+    return LIGHT_SENSOR.read_u16()
 
 
 def localtime_to_rtc():
@@ -50,6 +64,7 @@ def rtc_to_localtime():
 
 def time_from_ntp():
     import ntptime
+
     ntptime.settime()
     del sys.modules["ntptime"]
     gc.collect()
@@ -72,6 +87,7 @@ BUTTON_UP = machine.Pin.board.BUTTON_UP
 BUTTON_HOME = machine.Pin.board.BUTTON_HOME
 
 VBAT_SENSE = machine.ADC(machine.Pin.board.VBAT_SENSE)
+VBUS_DETECT = machine.Pin.board.VBUS_DETECT
 CHARGE_STAT = machine.Pin.board.CHARGE_STAT
 SENSE_1V1 = machine.ADC(machine.Pin.board.SENSE_1V1)
 
@@ -84,24 +100,245 @@ SYSTEM_TURBO = 4
 BAT_MAX = 4.10
 BAT_MIN = 3.00
 
-SYSTEM_FREQS = [
-    4000000,
-    12000000,
-    48000000,
-    133000000,
-    250000000
-]
+BUTTONS = {BUTTON_DOWN, BUTTON_A, BUTTON_B, BUTTON_C, BUTTON_UP}
 
-BUTTONS = {
-    BUTTON_DOWN,
-    BUTTON_A,
-    BUTTON_B,
-    BUTTON_C,
-    BUTTON_UP
-}
+conversion_factor = 3.3 / 65536
 
-exit_to_launcher = False
-conversion_factor = (3.3 / 65536)
+
+# takes a text string (that may include newline characters) and performs word
+# wrapping. returns a line of lines and their widths as a result.
+def wrap_and_measure(image, text, size, max_width):
+    result = []
+    for line in text.splitlines():
+        # if max_width is specified then perform word wrapping
+        if max_width:
+            # setup a start and end cursor to traverse the text
+            start, end = 0, 0
+            last_width = 0
+            i = 0
+            while True:
+                i += 1
+                # search for the next space
+                end = line.find(" ", end)
+                if end == -1:
+                    end = len(line)
+
+                # measure the text up to the space
+                width, _ = image.measure_text(line[start:end], size)
+                if width >= max_width:
+                    # line exceeded max length
+                    new_end = line.rfind(" ", start, end)
+                    if new_end == -1:
+                        result.append((line[start:end], last_width))
+                        start = end + 1
+                    else:
+                        result.append((line[start:new_end], last_width))
+                        start = new_end + 1
+                elif end == len(line):
+                    # reached the end of the string
+                    result.append((line[start:end], width))
+                    break
+
+                # step past the last space
+                end += 1
+                last_width = width
+        else:
+            # no wrapping needed, just return the original line with its width
+            width, _ = image.measure_text(line, size)
+            result.append((line, width))
+
+    return result
+
+
+def clamp(v, vmin, vmax):
+    return max(vmin, min(v, vmax))
+
+
+def file_exists(path):
+    try:
+        os.stat(path)
+        return True
+    except OSError:
+        return False
+
+
+def is_dir(path):
+    try:
+        flags = os.stat(path)
+        return flags[0] & 0x4000  # is a directory
+    except:  # noqa: E722
+        return False
+
+
+class SpriteSheet:
+    def __init__(self, file, columns, rows):
+        self.image = Image.load(file)
+        self.sw = int(self.image.width / columns)
+        self.sh = int(self.image.height / rows)
+
+        self.sprites = []
+        for x in range(columns):
+            column = []
+            for y in range(rows):
+                sprite = self.image.window(self.sw * x, self.sh * y, self.sw, self.sh)
+                column.append(sprite)
+            self.sprites.append(column)
+
+    def sprite(self, x, y):
+        return self.sprites[x][y]
+
+    def animation(self, x=0, y=0, count=None, horizontal=True):
+        if not count:
+            count = int(self.image.width / self.sw)
+        return AnimatedSprite(self, x, y, count, horizontal)
+
+
+class AnimatedSprite:
+    def __init__(self, spritesheet, x, y, count, horizontal=True):
+        self.spritesheet = spritesheet
+        self.frames = []
+        for _ in range(count):
+            self.frames.append((x, y))
+            if horizontal:
+                x += 1
+            else:
+                y += 1
+
+    def frame(self, frame_index=0):
+        frame_index = int(frame_index)
+        frame_index %= len(self.frames)
+        return self.spritesheet.sprite(
+            self.frames[frame_index][0], self.frames[frame_index][1]
+        )
+
+    def count(self):
+        return len(self.frames)
+
+
+class BitmapFont:
+    def __init__(self, file, char_width, char_height):
+        self.image = Image.load(file)
+        self.cw = char_width
+        self.ch = char_height
+
+        columns = self.image.width / self.cw
+        rows = self.image.height / self.ch
+
+        self.chars = []
+        for y in range(rows):
+            for x in range(columns):
+                self.chars.append(
+                    self.image.window(self.cw * x, self.ch * y, self.cw, self.ch)
+                )
+
+    def text(self, image, x, y, text, max_width=None, only_measure=False):
+        cx, cy = 0, 0  # caret pos
+        maxx, maxy = 0, 0
+
+        lines = text.splitlines()
+        for line in lines:
+            words = line.split(" ")
+            for word in words:
+                # work out length of word in pixels
+                wl = len(word) * self.cw
+
+                # move to next line if exceeds max width
+                if max_width and cx + wl > max_width:
+                    cx = 0
+                    cy += self.ch - 2
+
+                # render characters in word
+                for char in word:
+                    char_idx = ord(char)
+                    if not only_measure and char_idx < len(self.chars):
+                        image.blit(self.chars[char_idx], cx + x, cy + y)
+                    cx += self.cw
+
+                    if max_width and cx > max_width:
+                        cx = 0
+                        cy += self.ch - 2
+
+                # once the word has been rendered update our min and max cursor values
+                maxx = max(maxx, cx)
+                maxy = max(maxy, cy + self.ch - 2)
+
+                cx += self.cw / 3
+
+            cx = 0
+            cy += self.ch - 2
+
+        return maxx, maxy
+
+    def measure(self, text, max_width=None):
+        return self.text(None, 0, 0, text, max_width=max_width, only_measure=True)
+
+
+class Particle:
+    def __init__(self, position, motion, user=None):
+        self.position = position
+        self.motion = motion
+        self.user = user
+        self.created_at = time.ticks_ms()
+
+    def age(self):
+        return (time.ticks_ms() - self.created_at) / 1000
+
+
+class ParticleGenerator:
+    def __init__(self, gravity, max_age=2):
+        self.gravity = gravity
+        self.max_age = max_age
+        self.last_tick_ms = time.ticks_ms()
+        self.particles = []
+
+    def spawn(self, position, motion, user=None):
+        self.particles.append(Particle(position, motion, user))
+
+    def youngest(self):
+        return self.particles[-1] if len(self.particles) > 0 else None
+
+    # update all particle locations and age out particles that have expired
+    def tick(self):
+        # expire aged particles
+        self.particles = [
+            particle for particle in self.particles if particle.age() < self.max_age
+        ]
+
+        # update particles
+        dt = (time.ticks_ms() - self.last_tick_ms) / 1000
+        for particle in self.particles:
+            particle.position = (
+                particle.position[0] + (particle.motion[0] * dt),
+                particle.position[1] + (particle.motion[1] * dt),
+            )
+
+            # apply "gravity" force to motion vectors
+            particle.motion = (
+                (particle.motion[0] + self.gravity[0] * dt),
+                (particle.motion[1] + self.gravity[1] * dt),
+            )
+
+        self.last_tick_ms = time.ticks_ms()
+
+
+# show the current free memory including the delta since last time the
+# function was called, optionally include a custom message
+_lf = None
+
+
+def free(message=""):
+    global _lf
+    import gc
+
+    gc.collect()  # collect any free memory before reporting
+    f = int(gc.mem_free() / 1024)
+    print(f"{message}: {f}kb", end="")
+    if _lf:
+        delta = f - _lf
+        sign = "-" if delta < 0 else "+"
+        print(f" ({sign}{abs(delta)}kb)", end="")
+    print("")
+    _lf = f
 
 
 def woken_by_button():
@@ -110,7 +347,8 @@ def woken_by_button():
         powman.WAKE_BUTTON_B,
         powman.WAKE_BUTTON_C,
         powman.WAKE_BUTTON_UP,
-        powman.WAKE_BUTTON_DOWN)
+        powman.WAKE_BUTTON_DOWN,
+    )
 
 
 def pressed_to_wake(button):
@@ -123,134 +361,38 @@ def woken_by_reset():
     return powman.get_wake_reason() == 255
 
 
-def system_speed(speed):
-    try:
-        machine.freq(SYSTEM_FREQS[speed])
-    except IndexError:
-        pass
-
-
-def pressed_any():
-    return 0 in [button.value() for button in BUTTONS]
-
-
-def update():
-    display.update()
-
-
-def pressed(button):
-    return button.value() == 0
-
-
-@micropython.native
-def icon(data, index, data_w, icon_size, x, y):
-    s_x = (index * icon_size) % data_w
-    s_y = int((index * icon_size) / data_w)
-
-    for o_y in range(icon_size):
-        for o_x in range(icon_size):
-            o = ((o_y + s_y) * data_w) + (o_x + s_x)
-            bm = 0b10000000 >> (o & 0b111)
-            if data[o >> 3] & bm:
-                display.pixel(x + o_x, y + o_y)
-
-
-def image(data, w, h, x, y):
-    for oy in range(h):
-        row = data[oy]
-        for ox in range(w):
-            if row & 0b1 == 0:
-                display.pixel(x + ox, y + oy)
-            row >>= 1
-
-
 def sleep():
     display.set_backlight(0)
     powman.sleep()
 
 
-class App:
-    ICONS = {
-        "badge": "\uea67",
-        "book_2": "\uf53e",
-        "check_box": "\ue834",
-        "cloud": "\ue2bd",
-        "deployed-code": "\uf720",
-        "description": "\ue873",
-        "help": "\ue887",
-        "water_full": "\uf6d6",
-        "wifi": "\ue63e",
-        "image": "\ue3f4",
-        "info": "\ue88e",
-        "format_list_bulleted": "\ue241",
-        "joystick": "\uf5ee"
-    }
-    DIRECTORY = "apps"
-    DEFAULT_ICON = "description"
-    ERROR_ICON = "help"  # TODO: have a reserved error icon
-
-    def __init__(self, name):
-        self._file = name
-        self._meta = {
-            "NAME": name,
-            "ICON": App.DEFAULT_ICON,
-            "DESC": ""
-        }
-        self.path = f"{name}/__init__"
-        self._loaded = False
-
-    def read_metadata(self):
-        if self._loaded:
-            return
-
+class Assets:
+    @staticmethod
+    def font(name):
+        file = f"{ASSETS}/fonts/{name}.ppf"
         try:
-            exec(open(f"{App.DIRECTORY}/{self._file}/metadata.py", "r").read(), self._meta)
-        except SyntaxError:
-            self._meta["ICON"] = App.ERROR_ICON
-        self._loaded = True
-
-    @property
-    def name(self):
-        self.read_metadata()
-        return self._meta["NAME"]
-
-    @property
-    def icon(self):
-        self.read_metadata()
-        try:
-            return App.ICONS[self._meta["ICON"]]
-        except KeyError:
-            return App.ICONS[App.ERROR_ICON]
-
-    @property
-    def desc(self):
-        self.read_metadata()
-        return self._meta["DESC"]
+            return PixelFont.load(file)
+        except OSError as e:
+            raise ValueError(f'Font "{name}" not found. (Missing {file}?)') from e
 
     @staticmethod
-    def is_valid(file):
-        try:
-            open(f"{App.DIRECTORY}/{file}/metadata.py", "r")
-            return True
-        except OSError:
-            return False
-
-
-# List the apps available on device
-apps = [App(x) for x in os.listdir(App.DIRECTORY) if App.is_valid(x)]
-
-
-def wait_for_user_to_release_buttons():
-    while pressed_any():
-        time.sleep(0.01)
+    def fonts():
+        return [f[:-4] for f in os.listdir(f"{ASSETS}/fonts") if f.endswith(".ppf")]
 
 
 def is_charging():
-    return not CHARGE_STAT.value()
+    # We only want to return the charge status if the USB cable is connected.
+    if VBUS_DETECT.value():
+        return not CHARGE_STAT.value()
+
+    return False
+
+
+def get_usb_connected():
+    return bool(VBUS_DETECT.value())
 
 
 def sample_adc_u16(adc, samples=1):
-
     val = []
     for _ in range(samples):
         val.append(adc.read_u16())
@@ -265,17 +407,28 @@ def get_battery_level():
     vref = sample_adc_u16(SENSE_1V1, 10) * conversion_factor
     voltage = voltage / vref * 1.1
 
-    # Cap the value at 4.2v
-    voltage = min(voltage, BAT_MAX)
-
-    # Return the battery level as a perecentage
-    return floor((voltage - BAT_MIN) / (BAT_MAX - BAT_MIN) * 100)
+    # Return the battery level as a percentage
+    return min(100, max(0, round(123 - (123 / pow((1 + pow((voltage / 3.2), 80)), 0.165)))))
 
 
-def get_disk_usage():
+def get_battery_level():
+    # Use the battery voltage to estimate the remaining percentage
+
+    # Get the average reading over 20 samples from our VBAT and VREF
+    voltage = sample_adc_u16(VBAT_SENSE, 10) * conversion_factor * 2
+    vref = sample_adc_u16(SENSE_1V1, 10) * conversion_factor
+    voltage = voltage / vref * 1.1
+
+    # Return the battery level as a percentage
+    return min(100, max(0, round(123 - (123 / pow((1 + pow((voltage / 3.2), 80)), 0.165)))))
+
+
+def get_disk_usage(mountpoint="/"):
     # f_bfree and f_bavail should be the same?
     # f_files, f_ffree, f_favail and f_flag are unsupported.
-    f_bsize, f_frsize, f_blocks, f_bfree, _, _, _, _, _, f_namemax = os.statvfs("/")
+    f_bsize, f_frsize, f_blocks, f_bfree, _, _, _, _, _, f_namemax = os.statvfs(
+        mountpoint
+    )
 
     f_total_size = f_frsize * f_blocks
     f_total_free = f_bsize * f_bfree
@@ -287,162 +440,146 @@ def get_disk_usage():
     return f_total_size, f_used, f_free
 
 
-def state_running():
-    state = {"running": "launcher"}
-    state_load("launcher", state)
-    return state["running"]
-
-
-def state_clear_running():
-    running = state_running()
-    state_modify("launcher", {"running": "launcher"})
-    return running != "launcher"
-
-
-def state_set_running(app):
-    state_modify("launcher", {"running": app})
-
-
-def state_launch():
-    app = state_running()
-    if app is not None and app != "launcher":
-        launch(app)
-
-
-def state_delete(app):
-    try:
-        os.remove("/state/{}.json".format(app))
-    except OSError:
-        pass
-
-
-def state_save(app, data):
-    try:
-        with open("/state/{}.json".format(app), "w") as f:
-            f.write(json.dumps(data))
-            f.flush()
-    except OSError:
-        import os
+class State:
+    @staticmethod
+    def delete(app):
         try:
-            os.stat("/state")
+            os.remove("/state/{}.json".format(app))
         except OSError:
-            os.mkdir("/state")
-            state_save(app, data)
-
-
-def state_modify(app, data):
-    state = {}
-    state_load(app, state)
-    state.update(data)
-    state_save(app, state)
-
-
-def state_load(app, defaults):
-    try:
-        data = json.loads(open("/state/{}.json".format(app), "r").read())
-        if type(data) is dict:
-            defaults.update(data)
-            return True
-    except (OSError, ValueError):
-        pass
-
-    state_save(app, defaults)
-    return False
-
-
-def launch(file):
-    global exit_to_launcher
-
-    exit_to_launcher = False
-
-    wait_for_user_to_release_buttons()
-
-    app_path = f"{App.DIRECTORY}/{file}"
-
-    """
-    for k in locals().keys():
-        if k not in ("gc", "file", "badgeware_os"):
-            del locals()[k]
-    """
-
-    state_set_running(file)
-
-    gc.collect()
-
-    def quit_to_launcher(_pin):
-        global exit_to_launcher
-        state_clear_running()
-        os.sync()
-        while BUTTON_HOME.value() == 0:
             pass
-        exit_to_launcher = True
 
-    BUTTON_HOME.irq(trigger=machine.Pin.IRQ_FALLING, handler=quit_to_launcher)
+    @staticmethod
+    def save(app, data):
+        try:
+            with open("/state/{}.json".format(app), "w") as f:
+                f.write(json.dumps(data))
+                f.flush()
+        except OSError:
+            import os
 
+            try:
+                os.stat("/state")
+            except OSError:
+                os.mkdir("/state")
+                State.save(app, data)
+
+    @staticmethod
+    def modify(app, data):
+        state = {}
+        State.load(app, state)
+        state.update(data)
+        State.save(app, state)
+
+    @staticmethod
+    def load(app, defaults):
+        try:
+            data = json.loads(open("/state/{}.json".format(app), "r").read())
+            if type(data) is dict:
+                defaults.update(data)
+                return True
+        except (OSError, ValueError):
+            pass
+
+        State.save(app, defaults)
+        return False
+
+
+
+MAX_BACKLIGHT_SAMPLES = 30
+backlight_smoothing = [0.0 for _ in range(MAX_BACKLIGHT_SAMPLES)]
+backlight_smoothing_idx = 0
+
+
+def update_backlight():
+    global backlight_smoothing_idx
+    light = get_light() / 6553
+    backlight_smoothing[backlight_smoothing_idx] = min(1.0, max(0.5, light))
+    backlight_smoothing_idx += 1
+    backlight_smoothing_idx %= MAX_BACKLIGHT_SAMPLES
+    display.backlight(sum(backlight_smoothing) / MAX_BACKLIGHT_SAMPLES)
+
+
+def run(update, init=None, on_exit=None):
     try:
-        app = __import__(app_path)
-        app.init()
+        if init:
+            init()
+        try:
+            while True:
+                io.poll()
+                #update_backlight()
+                if (result := update()) is not None:
+                    return result
+                gc.collect()
+                display.update()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            if on_exit:
+                on_exit()
 
-        while not exit_to_launcher:
-            app.update()
-            app.render()
+    except Exception as e:  # noqa: BLE001
+        warning("Error!", get_exception(e))
 
-    except ImportError as e:
-        print(e)
-        # If the app doesn't exist, notify the user
-        warning(None, f"Could not launch: {file}")
-        time.sleep(4.0)
-    except Exception as e:  # noqa: BLE001 (We really do want to catch *all* exceptions!)
-        # If the app throws an error, catch it and display!
-        print(e)
-        warning(None, str(e))
-        time.sleep(4.0)
 
-    # If the app exits or errors, do not relaunch!
-    state_clear_running()
-    exit_to_launcher = True
+def get_exception(e):
+    s = stream.StringIO()
+    sys.print_exception(e, s)
+    s.seek(0)
+    s.readline()  # Drop the "Traceback" bit
+    return s.read()
 
 
 # Draw an overlay box with a given message within it
-def warning(display, message, width=WIDTH - 20, height=HEIGHT - 20, line_spacing=20, text_size=0.6):
-    print(message)
-    """
-    if display is None:
-        display = Tufty2350()
-        # display.led(128)
-    """
+def message(title, text, window=None):
+    error_window = window or screen.window(0, 0, screen.width, screen.height)
+    error_window.font = DEFAULT_FONT
 
     # Draw a light grey background
-    display.set_pen(12)
-    display.rectangle((WIDTH - width) // 2, (HEIGHT - height) // 2, width, height)
+    background = shapes.rounded_rectangle(
+        0, 0, error_window.width, error_window.height, 5, 5, 5, 5
+    )
+    heading = shapes.rounded_rectangle(0, 0, error_window.width, 12, 5, 5, 0, 0)
+    error_window.brush = brushes.color(100, 100, 100, 200)
+    error_window.draw(background)
 
-    width -= 20
-    height -= 20
+    error_window.brush = brushes.color(255, 100, 100, 200)
+    error_window.draw(heading)
 
-    display.set_pen(15)
-    display.rectangle((WIDTH - width) // 2, (HEIGHT - height) // 2, width, height)
+    error_window.brush = brushes.color(50, 100, 50)
+    tw = 35
+    error_window.draw(
+        shapes.rounded_rectangle(
+            error_window.width - tw - 10, error_window.height - 12, tw, 12, 3, 3, 0, 0
+        )
+    )
 
-    # Take the provided message and split it up into
-    # lines that fit within the specified width
-    words = message.split(" ")
+    error_window.brush = brushes.color(255, 200, 200)
+    error_window.text(
+        "Okay", error_window.width - tw + 5 - 10, error_window.height - 12
+    )
+    y = 0
+    error_window.text(title, 5, y)
+    y += 17
 
-    lines = []
-    current_line = ""
-    for word in words:
-        if display.measure_text(current_line + word + " ", text_size) < width:
-            current_line += word + " "
-        else:
-            lines.append(current_line.strip())
-            current_line = word + " "
-    lines.append(current_line.strip())
-
-    display.set_pen(0)
-
-    # Display each line of text from the message, centre-aligned
-    num_lines = len(lines)
-    for i in range(num_lines):
-        length = display.measure_text(lines[i], text_size)
-        current_line = (i * line_spacing) - ((num_lines - 1) * line_spacing) // 2
-        display.text(lines[i], (WIDTH - length) // 2, (HEIGHT // 2) + current_line, WIDTH, text_size)
+    error_window.brush = brushes.color(200, 200, 200)
+    text_lines = wrap_and_measure(error_window, text, 12, error_window.width - 10)
+    for line, _width in text_lines:
+        error_window.text(line, 5, y)
+        y += 10
 
     display.update()
+    while True:
+        io.poll()
+        if io.pressed:
+            break
+    while io.pressed:
+        io.poll()
+
+
+def warning(title, text):
+    print(f"- ERROR: {text}")
+    message(title, text)
+
+
+if __name__ == "__main__":
+    warning("Hello from badgeware.py", "Why are you running me?")
