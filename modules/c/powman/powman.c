@@ -141,10 +141,10 @@ void powman_init() {
         gpio_set_dir(i, GPIO_IN);
         gpio_set_input_enabled(i, false);
         switch (i) {
-            case 14:
-            case 22:
+            case BW_RESET_SW:
+            case BW_SWITCH_HOME:
             case 40:
-            case 41:
+            case BW_SW_POWER_EN:
             case 42: // Floating
                 gpio_disable_pulls(i);
                 break;
@@ -332,10 +332,12 @@ static inline void setup_gpio(bool buttons_only) {
     gpio_set_pulls(BW_VBUS_DETECT, false, false);
 
     // Init the charge status detect
+    
+    /*
     gpio_init(BW_CHARGE_STAT);
     gpio_set_dir(BW_CHARGE_STAT, GPIO_IN);
     gpio_set_pulls(BW_CHARGE_STAT, true, false);
-
+    */
     // Set up LEDs
     gpio_init_mask(0b1111);
     gpio_set_dir_out_masked(0b1111);

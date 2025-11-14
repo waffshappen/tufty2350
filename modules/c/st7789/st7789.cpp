@@ -163,12 +163,14 @@ namespace pimoroni {
   }
 
   void ST7789::write_buffer_async() {
+    /*
     // Block waiting for the vsync signal
     gpio_put(dc, 0);
     gpio_set_dir(dc, GPIO_IN);
     gpio_set_pulls(dc, true, false);
     while (gpio_get(dc)) {
     }
+    */
     gpio_set_pulls(dc, false, false);
     gpio_set_dir(dc, GPIO_OUT);
     uint8_t cmd = reg::RAMWR;

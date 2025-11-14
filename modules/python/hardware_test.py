@@ -6,7 +6,8 @@ import powman
 import st7789
 from machine import ADC, I2C, Pin, Timer
 from pcf85063a import PCF85063A
-from picovector import Font, brushes, screen, shapes
+from picovector import PixelFont, brushes, screen, shapes
+import gc
 
 display = st7789.ST7789()
 
@@ -27,6 +28,7 @@ E12 - Light sensor reading out of range
 E14 - Missing secrets file for network connection
 E15 - Failed to connect to network
 E17 - Failed to start CYW43 (RM2 Module)
+E18 - PSRAM Test Failure
 
 """
 
@@ -63,10 +65,10 @@ BURST = 3
 BURST_DELAY = 0.01
 SILENCE_DELAY = 0.05
 
-monasans = Font.load("/system/assets/fonts/MonaSans-Medium.af")
-screen.font = monasans
+font_ziplock = PixelFont.load("/system/assets/fonts/ignore.ppf")
+screen.font = font_ziplock
 
-TEXT_SIZE = 14
+TEXT_SIZE = 12
 screen.antialias = 4
 
 
@@ -165,8 +167,11 @@ class Tests:
     def display_error(self, error):
         screen.brush = DARK_RED
         screen.clear()
+
+        tw, th = screen.measure_text(str(error))
+
         screen.brush = WHITE
-        screen.text(str(error), 50, 16, TEXT_SIZE * 4)
+        screen.text(str(error), WIDTH / 2 - (tw / 2), HEIGHT / 2 - th / 2)
         display.update()
 
     def test_buttons(self):
@@ -196,6 +201,12 @@ class Tests:
         if reading < 100 or reading > 2000:
             raise Exception("E12")
 
+    def test_psram(self):
+        ram_free = round(gc.mem_free() / 1000000, 1)
+
+        if ram_free < 8.2:
+            raise Exception("E18")
+
     # Toggle the case lights on the back of the badge
     def cl_toggle(self, _t):
         for led in CL:
@@ -222,7 +233,6 @@ class Tests:
     def run(self):
 
         try:
-
             # We want to check we can toggle the SW_POWER_EN pin.
             # We're going to do it here before the rest of test starts
             power.off()
@@ -233,6 +243,8 @@ class Tests:
             power.on()
             if not power.value():
                 raise Exception("E8")
+            
+            self.test_psram()
 
             # Set the timers for the RTC test
             self.rtc.set_timer(2)
@@ -286,12 +298,14 @@ class Tests:
             screen.brush = DARK_GREEN
             screen.clear()
             screen.brush = WHITE
-            screen.text("PASS", 30, -10, TEXT_SIZE * 3)
+            t = "Pass!"
+            tw, _ = screen.measure_text(t)
+            screen.text(t, 80 - (tw / 2), 5)
             text_lines = wrap_and_measure(screen, "Press B to sleep", TEXT_SIZE - 1, 150)
-            y = 60
+            y = 40
             for line, _width in text_lines:
                 screen.text(line, 5, y, TEXT_SIZE - 1)
-                y += 12
+                y += 22
             display.update()
             time.sleep(0.5)
 
@@ -353,10 +367,10 @@ class Tests:
         screen.brush = WHITE
 
         text_lines = wrap_and_measure(screen, "Press all face buttons + HOME", TEXT_SIZE, 150)
-        y = 45
+        y = 25
         for line, _width in text_lines:
-            screen.text(line, 5, y, TEXT_SIZE)
-            y += 15
+            screen.text(line, 5, y)
+            y += 20
 
         # Draw button presses
         for button in sorted(self.buttons):
