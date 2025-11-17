@@ -59,12 +59,6 @@ home = Pin.board.BUTTON_HOME
 power = Pin.board.POWER_EN
 LIGHT_SENSOR = ADC(Pin.board.LIGHT_SENSE)
 
-# Beacon Constants
-ADDRESS = 0x45      # Make sure this matches the address used for the event
-BURST = 3
-BURST_DELAY = 0.01
-SILENCE_DELAY = 0.05
-
 font_ziplock = PixelFont.load("/system/assets/fonts/ignore.ppf")
 screen.font = font_ziplock
 
