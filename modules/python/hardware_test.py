@@ -59,8 +59,8 @@ home = Pin.board.BUTTON_HOME
 power = Pin.board.POWER_EN
 LIGHT_SENSOR = ADC(Pin.board.LIGHT_SENSE)
 
-font_ziplock = PixelFont.load("/system/assets/fonts/ignore.ppf")
-screen.font = font_ziplock
+font_ignore = PixelFont.load("/system/assets/fonts/ignore.ppf")
+screen.font = font_ignore
 
 TEXT_SIZE = 12
 screen.antialias = 4
@@ -210,7 +210,8 @@ class Tests:
     def clear_flag(self):
         # Now the test has complete, we can remove the flag.
         try:
-            os.remove("hardware_test.txt")
+            pass
+            #os.remove("hardware_test.txt")
         except OSError:
             pass
 
@@ -335,7 +336,7 @@ class Tests:
             screen.clear()
             screen.brush = WHITE
             text_lines = wrap_and_measure(screen, "< Remove USB to continue.", TEXT_SIZE, 150)
-            y = 50
+            y = 40
             for line, _width in text_lines:
                 screen.text(line, 5, y, TEXT_SIZE)
                 y += 15
@@ -371,7 +372,7 @@ class Tests:
             pressed = self.buttons[button][0]
             if not pressed:
                 x, y = self.buttons[button][1]
-                screen.draw(shapes.rectangle(x, y, 10, 10))
+                screen.draw(shapes.rounded_rectangle(x, y, 10, 10, 3))
 
         display.update()
 
