@@ -1,16 +1,10 @@
 import math
-from badgeware import screen, PixelFont, SpriteSheet, shapes, brushes, io, Image
+from badgeware import screen, PixelFont, shapes, brushes, io, Image
 
 screen.antialias = Image.X2
 canvas_area = (10, 15, 140, 85)
 
 font = PixelFont.load("/system/assets/fonts/vest.ppf")
-mona = SpriteSheet("/system/assets/mona-sprites/mona-dance.png", 6, 1).animation()
-
-
-def draw_mona(pos, direction):
-    frame = int(io.ticks / 150)
-    screen.scale_blit(mona.frame(frame), pos[0], pos[1], 28 * direction, 24)
 
 
 def draw_background():
@@ -20,11 +14,11 @@ def draw_background():
 
     # draw the embossed gold logo
     screen.font = font
-    w, _ = screen.measure_text("MonaSketch")
+    w, _ = screen.measure_text("Sketch")
     screen.brush = brushes.color(240, 210, 160)
-    screen.text("MonaSketch", 80 - (w / 2) - 1, -1)
+    screen.text("Sketch", 80 - (w / 2) - 1, -1)
     screen.brush = brushes.color(190, 140, 80, 100)
-    screen.text("MonaSketch", 80 - (w / 2), 0)
+    screen.text("Sketch", 80 - (w / 2), 0)
 
     # draw the canvas area grey background and screen shadows
     screen.brush = brushes.color(210, 210, 210)

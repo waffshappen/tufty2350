@@ -10,9 +10,6 @@ import ui
 
 canvas = Image(0, 0, ui.canvas_area[2], ui.canvas_area[3])
 cursor = (ui.canvas_area[2] / 2, ui.canvas_area[3] / 2)
-mona_position = (10, 76)
-mona_target = (10, 76)
-mona_direction = 1
 
 last_cursor_move = None
 last_cursor = None
@@ -51,40 +48,15 @@ def update_cursor():
         canvas.draw(shapes.rectangle(int(cursor[0]), int(cursor[1]), 1, 1))
     last_cursor = cursor
 
-# animate mona to her target location
-
-
-def update_mona():
-    global mona_position, mona_direction
-    if mona_position[0] < mona_target[0]:
-        mona_position = (mona_position[0] + 1, mona_position[1])
-        mona_direction = 1
-    elif mona_position[0] > mona_target[0]:
-        mona_position = (mona_position[0] - 1, mona_position[1])
-        mona_direction = -1
-    else:
-        mona_direction = 1 if mona_position[0] < (
-            ui.canvas_area[2] / 2) else -1
-
 
 def update():
-    global mona_target, mona_direction
 
     update_cursor()
-    update_mona()
 
     ui.draw_background()
 
-    # if the users cursor is too near to mona then make her run away
-    if cursor[0] < 30:
-        mona_target = (120, 76)
-    if cursor[0] > ui.canvas_area[2] - 30:
-        mona_target = (10, 76)
-
     screen.blit(canvas, ui.canvas_area[0], ui.canvas_area[1])
     ui.draw_cursor(cursor)
-
-    ui.draw_mona(mona_position, mona_direction)
 
     ui.draw_dial(left_dial_angle, (5, 115))
     ui.draw_dial(right_dial_angle, (155, 115))
@@ -92,4 +64,3 @@ def update():
 
 if __name__ == "__main__":
     run(update)
-
