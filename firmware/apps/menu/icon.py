@@ -99,5 +99,5 @@ class Icon:
                 self.pos[0] - sprite_offset - 1,
                 self.pos[1] - 13,
                 sprite_width,
-                24,
+                32,
             )
