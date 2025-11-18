@@ -20,9 +20,8 @@ import network
 from badgeware import (HEIGHT, WIDTH, Image, Matrix, PixelFont, SpriteSheet,
                        brushes, io, run, screen, shapes)
 
-icons = SpriteSheet("christmas.png", 2, 1)
-TREE_SMALL_DEC = icons.sprite(0, 0)
-GIFT = icons.sprite(1, 0)
+icons = SpriteSheet("ornament01.png", 1, 1)
+ornament = icons.sprite(0, 0)
 
 font_ziplock = PixelFont.load("/system/assets/fonts/ziplock.ppf")
 font_awesome = PixelFont.load("/system/assets/fonts/awesome.ppf")
@@ -33,7 +32,7 @@ screen.antialias = Image.X2
 RED = (169, 41, 33)
 STAR_YELLOW = (250, 225, 0)
 
-WIFI_TIMEOUT = 60
+WIFI_TIMEOUT = 30
 
 COUNTDOWN_API = "https://christmascountdown.live/api/timeleft"
 
@@ -259,7 +258,7 @@ def update():
             screen.brush = brushes.color(255, 255, 255, 175)
             screen.draw(shapes.rounded_rectangle(15, 25, WIDTH - 30, HEIGHT - 50, 5).stroke(2))
 
-            screen.scale_blit(TREE_SMALL_DEC, 5, HEIGHT - 40, 32, 32)
+            screen.scale_blit(ornament, 5, HEIGHT - 40, 32, 32)
 
             screen.brush = brushes.color(*STAR_YELLOW)
             star = shapes.star(0, 0, 5, 9, 16)
