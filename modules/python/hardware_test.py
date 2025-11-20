@@ -45,6 +45,7 @@ CL = [Pin(0, Pin.OUT), Pin(1, Pin.OUT),
       Pin(2, Pin.OUT), Pin(3, Pin.OUT)]
 
 charge_stat = Pin.board.CHARGE_STAT
+charge_stat.init(mode=Pin.IN)
 vbus_detect = Pin.board.VBUS_DETECT
 sw_int = Pin.board.BUTTON_INT
 rtc_alarm = Pin.board.RTC_ALARM
@@ -114,10 +115,6 @@ class Tests:
         self.vbus_pass = False
         self.rtc_pass = None
 
-        self.wlan = network.WLAN(network.WLAN.IF_STA)
-        self.wlan.active(True)
-        self.mac = self.wlan.config("mac")
-
         sw_int.irq(self.btn_handler)
 
         # RTC Setup
@@ -142,6 +139,11 @@ class Tests:
                         "DOWN": [False, (WIDTH - 13, 82)], "HOME": [False, (WIDTH // 2 - 7, 5)]}
 
     def test_wireless(self):
+
+        self.wlan = network.WLAN(network.WLAN.IF_STA)
+        self.wlan.active(True)
+        self.mac = self.wlan.config("mac")
+
         try:
             if self.wifi_pass is None:
                 data = ":".join([f"{b:02X}" for b in self.mac])
@@ -181,6 +183,7 @@ class Tests:
     def test_charge_stat(self):
         # if battery charging is not detected
         # raise an exception and end the test
+        print(charge_stat.value())
         if charge_stat.value() == 1:
             raise Exception("E2")
 
@@ -211,7 +214,7 @@ class Tests:
         # Now the test has complete, we can remove the flag.
         try:
             pass
-            #os.remove("hardware_test.txt")
+            # os.remove("hardware_test.txt")
         except OSError:
             pass
 
@@ -228,6 +231,9 @@ class Tests:
     def run(self):
 
         try:
+
+            self.test_charge_stat()
+
             # We want to check we can toggle the SW_POWER_EN pin.
             # We're going to do it here before the rest of test starts
             power.off()
@@ -238,7 +244,7 @@ class Tests:
             power.on()
             if not power.value():
                 raise Exception("E8")
-            
+
             self.test_psram()
 
             # Set the timers for the RTC test
@@ -254,7 +260,6 @@ class Tests:
                 raise Exception("E6")
 
             self.test_wireless()
-            self.test_charge_stat()
 
             if not self.vbus_pass:
                 self.test_vbus()
