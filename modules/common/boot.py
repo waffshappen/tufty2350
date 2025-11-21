@@ -31,3 +31,15 @@ def copy_files():
 
 if powman.get_wake_reason() == powman.WAKE_WATCHDOG:
     copy_files()
+
+
+import picovector
+import builtins
+
+# Import PicoSystem module constants to builtins,
+# so they are available globally.
+for k, v in picovector.__dict__.items():
+    if not k.startswith("__"):
+        setattr(builtins, k, v)
+
+setattr(builtins, "screen", picovector.screen)
