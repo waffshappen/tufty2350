@@ -5,9 +5,9 @@ import os
 from badgeware import run, io
 import machine
 import gc
-import powman
+# import powman
 
-SKIP_CINEMATIC = powman.get_wake_reason() == powman.WAKE_WATCHDOG
+SKIP_CINEMATIC = True   # powman.get_wake_reason() == powman.WAKE_WATCHDOG
 
 running_app = None
 
@@ -67,4 +67,3 @@ run(running_app.update)
 
 # Unreachable, in theory!
 machine.reset()
-
