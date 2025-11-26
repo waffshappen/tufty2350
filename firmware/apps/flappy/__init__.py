@@ -4,8 +4,8 @@ import os
 sys.path.insert(0, "/system/apps/flappy")
 os.chdir("/system/apps/flappy")
 
-from badgeware import screen, Image, PixelFont, SpriteSheet, io, brushes, shapes, run
-from mona import Mona
+from badgeware import screen, Image, PixelFont, io, brushes, shapes, run, State
+from chicken import Chicken
 from obstacle import Obstacle
 
 background = Image.load("assets/background.png")
@@ -13,8 +13,13 @@ grass = Image.load("assets/grass.png")
 cloud = Image.load("assets/cloud.png")
 large_font = PixelFont.load("/system/assets/fonts/ziplock.ppf")
 small_font = PixelFont.load("/system/assets/fonts/nope.ppf")
-ghost = SpriteSheet("/system/assets/mona-sprites/mona-dead.png", 7, 1).animation()
-mona = None
+chicken = None
+
+score = {
+    "highscore": 0
+}
+
+State.load("flappy", score)
 
 
 class GameState:
@@ -39,64 +44,73 @@ def update():
         game_over()
 
 
+def reset_state():
+    global state, chicken
+
+    # reset game state
+    state = GameState.PLAYING
+    Obstacle.obstacles = []
+    Obstacle.next_spawn_time = io.ticks + 500
+    chicken = Chicken()
+
+
 # handle the intro screen of the game, shows the game title and a message to
 # tell the player how to start the game
-
-
 def intro():
-    global state, mona
+    global state, chicken, score
 
     # draw title
     screen.font = large_font
-    center_text("FLAPPY MONA", 38)
+    center_text("FLAPPY CHICKEN", 38)
 
     # blink button message
     if int(io.ticks / 500) % 2:
         screen.font = small_font
-        center_text("Press A to start", 70)
+        center_text("Press B to start", 68)
 
-    if io.BUTTON_A in io.pressed:
-        # reset game state
-        state = GameState.PLAYING
-        Obstacle.obstacles = []
-        Obstacle.next_spawn_time = io.ticks + 500
-        mona = Mona()
+    # show off the high score!
+    screen.font = small_font
+    hs = str(score["highscore"])
+    center_text(f"High Score: {hs}", 95)
+
+    if io.BUTTON_B in io.pressed:
+        reset_state()
 
 # handle the main game loop and user input. each tick we'll update the game
-# state (read button input, move mona, create new obstacles, etc..) then
+# state (read button input, move chicken, create new obstacles, etc..) then
 # draw the background and sprites
 
 
 def play():
     global state
 
-    # if the user has pressed A then make mona jump for her life!
-    if not mona.is_dead() and io.BUTTON_A in io.pressed:
-        mona.jump()
+    # if the user has pressed A then make chicken jump for her life!
+    if not chicken.is_dead() and io.BUTTON_B in io.pressed:
+        chicken.jump()
 
     # update player and check for collision
-    mona.update()
+    chicken.update()
 
     # spawn a new obstacle if the spawn timer has elapsed
-    if not mona.is_dead() and Obstacle.next_spawn_time and io.ticks > Obstacle.next_spawn_time:
+    if not chicken.is_dead() and Obstacle.next_spawn_time and io.ticks > Obstacle.next_spawn_time:
         Obstacle.spawn()
 
     # update obstacle positions and draw them
     for obstacle in Obstacle.obstacles:
-        if not mona.is_dead():
+        if not chicken.is_dead():
             obstacle.update()
         obstacle.draw()
 
-    # draw our hero, mona
-    mona.draw()
+    # draw our hero, chicken
+    chicken.draw()
 
     # show the player their current score
     screen.font = small_font
-    shadow_text(f"Score: {mona.score}", 3, 0)
+    shadow_text(f"Score: {chicken.score}", 3, 0)
 
-    # has mona died this frame? if so it's... GAME OVER
-    if mona.is_dead():
-        if mona.is_done_dying():
+    # has chicken died this frame? if so it's... GAME OVER
+    if chicken.is_dead():
+        if chicken.is_done_dying():
             state = GameState.GAME_OVER
 
 # handle the GAME OVER screen. show the player what score they achieved and
@@ -112,16 +126,21 @@ def game_over():
 
     # players final score
     screen.font = small_font
-    center_text(f"Final score: {mona.score}", 40)
+    center_text(f"Final score: {chicken.score}", 40)
+
+    # save the score if the previous high score has been beaten
+    if chicken.score > score["highscore"]:
+        score["highscore"] = chicken.score
+        State.save("flappy", score)
 
     # flash press button message
     if int(io.ticks / 500) % 2:
         screen.brush = brushes.color(255, 255, 255)
-        center_text("Press A to restart", 70)
+        center_text("Press B to restart", 70)
 
-    if io.BUTTON_A in io.pressed:
-        # return game to intro state
-        state = GameState.INTRO
+    if io.BUTTON_B in io.pressed:
+        reset_state()
+        state = GameState.PLAYING
 
 
 # draw the scrolling background with parallax layers
@@ -132,18 +151,18 @@ def draw_background():
     global background_offset
 
     # clear the whole screen in a bright blue
-    screen.brush = brushes.color(73, 219, 255)
+    screen.brush = brushes.color(250, 198, 104)
     screen.draw(shapes.rectangle(0, 0, 160, 120))
 
-    # if we're on the intro screen or mona is alive then scroll the background
-    if not mona or not mona.is_dead() or state == GameState.INTRO:
+    # if we're on the intro screen or chicken is alive then scroll the background
+    if not chicken or not chicken.is_dead() or state == GameState.INTRO:
         background_offset += 1
 
     for i in range(3):
         # draw the distance background
         bo = ((-background_offset / 8) % background.width) - screen.width
         screen.blit(background, bo + (background.width * i),
-                    120 - background.height)
+                    115 - background.height)
 
         # draw the cloud background
         bo = ((-background_offset / 8) % (cloud.width * 2)) - screen.width
@@ -153,6 +172,7 @@ def draw_background():
         # draw the grass layer
         bo = ((-background_offset / 4) % (grass.width)) - screen.width
         screen.blit(grass, bo + (grass.width * i), 120 - grass.height)
+
 
 # a couple of helper functions for formatting text
 

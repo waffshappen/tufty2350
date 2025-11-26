@@ -12,19 +12,19 @@ class Obstacle:
     def spawn():
         # create a new obstacle and reset the obstacle spawn timer
         Obstacle.obstacles.append(Obstacle())
-        Obstacle.next_spawn_time = io.ticks + 1500
+        Obstacle.next_spawn_time = io.ticks + 2500
 
         # clean up any obstacles that are now off screen and can be removed
-        Obstacle.obstacles = [o for o in Obstacle.obstacles if o.x > -24]
+        Obstacle.obstacles = [o for o in Obstacle.obstacles if o.x > -32]
 
     def __init__(self):
         # position the new obstacle off the right hand side of the screen and
         # randomise the height of the gap
         self.x = screen.width
-        self.gap_height = 60
-        self.gap_y = random.randint(15, screen.height - self.gap_height - 15)
+        self.gap_height = 50
+        self.gap_y = random.randrange(10, screen.height - self.gap_height - 20, 5)
 
-        # when mona passes an obstacle we flag it so the score is only increased once
+        # when chicken passes an obstacle we flag it so the score is only increased once
         self.passed = False
 
     def update(self):
@@ -34,24 +34,24 @@ class Obstacle:
     def bounds(self):
         # be a little generous with obstacle bounding boxes for collisions
         return (
-            (self.x, 0, 24, self.gap_y - 2),
-            (self.x, self.gap_y + self.gap_height + 2,
-                24, 120 - self.gap_y + self.gap_height - 2)
+            (self.x, 0, 32, self.gap_y - 6),
+            (self.x, self.gap_y + self.gap_height + 6,
+                32, 120 - self.gap_y + self.gap_height - 6)
         )
 
     def draw(self):
         # draw the top half off the obstacle
         screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y - 72, 24, 24)
+                          self.gap_y - 72, 32, 32)
         screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y - 48, 24, 24)
+                          self.gap_y - 48, 32, 32)
         screen.scale_blit(sprites.sprite(1, 0), self.x,
-                          self.gap_y - 24, 24, 24)  # spikes, yikes!
+                          self.gap_y - 32, 32, 32)  # spikes, yikes!
 
         # draw the bottom half off the obstacle
-        screen.scale_blit(sprites.sprite(1, 0), self.x, self.gap_y +
-                          self.gap_height, 24, -24)  # spikes, yikes!
+        screen.scale_blit(sprites.sprite(1, 0), self.x,
+                          self.gap_y + self.gap_height, 32, -32)  # spikes, yikes!
         screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y + self.gap_height + 24, 24, -24)
+                          self.gap_y + self.gap_height + 32, 32, -32)
         screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y + self.gap_height + 48, 24, -24)
+                          self.gap_y + self.gap_height + 48, 32, -32)
