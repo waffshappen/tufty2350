@@ -59,6 +59,13 @@
 #define BW_SWITCH_INT    (15) // Pull up, active low
 #define BW_SWITCH_MASK   ((1 << BW_SWITCH_A) | (1 << BW_SWITCH_B) | (1 << BW_SWITCH_C) | (1 << BW_SWITCH_UP) | (1 << BW_SWITCH_DOWN))
 
+// 200 MHz
+#define PLL_SYS_REFDIV   (1)
+#define PLL_SYS_VCO_FREQ_HZ (1200000000)
+#define PLL_SYS_POSTDIV1 (6)
+#define PLL_SYS_POSTDIV2 (1)
+#define SYS_CLK_HZ       (200000000)
+
 // For board detection
 #define RASPBERRYPI_PICO2_W
 
