@@ -21,7 +21,9 @@ import random
 import time
 from collections import namedtuple
 
-from badgeware import HEIGHT, WIDTH, io, run
+from badgeware import HEIGHT, WIDTH, io, run, SpriteSheet
+
+hedge = SpriteSheet("assets/hedge.png", 2, 16)
 
 # Setup for the display
 font = PixelFont.load("/system/assets/fonts/nope.ppf")
@@ -35,7 +37,7 @@ RED = brushes.color(255, 0, 0)
 GREEN = brushes.color(0, 255, 0)
 PLAYER = brushes.color(227, 231, 110)
 WALL = brushes.color(127, 125, 244)
-BACKGROUND = brushes.color(60, 57, 169)
+BACKGROUND = Image.load("assets/background.png")
 PATH = brushes.color((227 + 60) // 2, (231 + 57) // 2, (110 + 169) // 2)
 
 CX, CY = WIDTH / 2, HEIGHT / 2
@@ -48,9 +50,11 @@ MIN_MAZE_HEIGHT = 2
 MAX_MAZE_HEIGHT = 5
 WALL_SHADOW = 1
 WALL_GAP = 1
+WALL_BITSHIFT = 4
 TEXT_SHADOW = 2
 MOVEMENT_SLEEP = 0.05
 DIFFICULT_SCALE = 0.5
+N, S, E, W = 1, 2, 4, 8
 
 # Variables
 complete = False                                # Has the game been completed?
@@ -172,6 +176,26 @@ class MazeBuilder:
         self.grid_columns = (self.width * 2 + 1)
         self.grid_rows = (self.height * 2 + 1)
 
+        for y in range(self.grid_rows):
+            for x in range(self.grid_columns):
+                current = self.maze[y][x]
+                if current > 0:
+                    current -= 1
+
+                    if x < self.grid_columns - 1:
+                        right = self.maze[y][x + 1]
+                        if right > 0:
+                            current += E << WALL_BITSHIFT
+                            self.maze[y][x + 1] += W << WALL_BITSHIFT
+
+                    if y < self.grid_rows - 1:
+                        down = self.maze[y + 1][x]
+                        if down > 0:
+                            current += S << WALL_BITSHIFT
+                            self.maze[y + 1][x] += N << WALL_BITSHIFT
+
+                    self.maze[y][x] = current
+
     def choose_neighbour(self, current):
         unvisited = []
         for dx in range(-1, 2, 2):
@@ -198,25 +222,24 @@ class MazeBuilder:
 
     def draw(self, display):
         # Draw the maze we have built. Each '1' in the array represents a wall
-        for row in range(self.grid_rows):
-            for col in range(self.grid_columns):
+        for y in range(self.grid_rows):
+            for x in range(self.grid_columns):
+                wall = self.maze[y][x] >> WALL_BITSHIFT
+                path = self.maze[y][x] & ((1 << WALL_BITSHIFT) - 1)
                 # Calculate the screen coordinates
-                x = (col * wall_separation) + offset_x
-                y = (row * wall_separation) + offset_y
+                px = (x * wall_separation) + offset_x
+                py = (y * wall_separation) + offset_y
 
-                if self.maze[row][col] == 1:
-                    # Draw a wall shadow
-                    screen.brush = BLACK
-                    screen.draw(shapes.rectangle(x + WALL_SHADOW, y + WALL_SHADOW, wall_size, wall_size))
+                if wall != 0:
+                    sprite = (0, wall)
+                else:
+                    sprite = (1, path)
 
-                    # Draw a wall top
-                    screen.brush = WALL
-                    screen.draw(shapes.rectangle(x, y, wall_size, wall_size))
+                if y == 1 and x == 0:
+                    print(bin(wall))
+                    print(self.grid_rows, self.grid_columns)
 
-                if self.maze[row][col] == 2:
-                    # Draw the player path
-                    screen.brush = PATH
-                    screen.draw(shapes.rectangle(x, y, wall_size, wall_size))
+                screen.scale_blit(hedge.sprite(*sprite), px, py, wall_separation, wall_separation)
 
 
 class Player(object):
@@ -231,23 +254,29 @@ class Player(object):
 
     def update(self, maze):
 
-        if io.BUTTON_A in io.held and maze[self.y][self.x - 1] != 1:
+        if io.BUTTON_A in io.held and maze[self.y][self.x - 1] < (1 << WALL_BITSHIFT):
+            maze[self.y][self.x] |= W
             self.x -= 1
+            maze[self.y][self.x] |= E
             time.sleep(MOVEMENT_SLEEP)
 
-        elif io.BUTTON_C in io.held and maze[self.y][self.x + 1] != 1:
+        elif io.BUTTON_C in io.held and maze[self.y][self.x + 1] < (1 << WALL_BITSHIFT):
+            maze[self.y][self.x] |= E
             self.x += 1
+            maze[self.y][self.x] |= W
             time.sleep(MOVEMENT_SLEEP)
 
-        elif io.BUTTON_UP in io.held and maze[self.y - 1][self.x] != 1:
+        elif io.BUTTON_UP in io.held and maze[self.y - 1][self.x] < (1 << WALL_BITSHIFT):
+            maze[self.y][self.x] |= N
             self.y -= 1
+            maze[self.y][self.x] |= S
             time.sleep(MOVEMENT_SLEEP)
 
-        elif io.BUTTON_DOWN in io.held and maze[self.y + 1][self.x] != 1:
+        elif io.BUTTON_DOWN in io.held and maze[self.y + 1][self.x] < (1 << WALL_BITSHIFT):
+            maze[self.y][self.x] |= S
             self.y += 1
+            maze[self.y][self.x] |= N
             time.sleep(MOVEMENT_SLEEP)
-
-        maze[self.y][self.x] = 2
 
     def draw(self, display):
         screen.brush = self.colour
@@ -282,8 +311,7 @@ def build_maze():
 
 def draw_maze():
     # Clear the screen to the background colour
-    screen.brush = BACKGROUND
-    screen.clear()
+    screen.blit(BACKGROUND, 0, 0)
 
     # Draw the maze walls
     builder.draw(screen)
