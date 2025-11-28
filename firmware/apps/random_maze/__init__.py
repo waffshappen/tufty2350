@@ -23,19 +23,37 @@ from collections import namedtuple
 
 from badgeware import HEIGHT, WIDTH, io, run, SpriteSheet
 
+
+class GameState:
+    INTRO = 1
+    PLAYING = 2
+    GAME_OVER = 3
+
+
+state = GameState.INTRO
+
 hedge = SpriteSheet("assets/hedge.png", 2, 16)
 
 # Setup for the display
 font = PixelFont.load("/system/assets/fonts/nope.ppf")
+large_font = PixelFont.load("/system/assets/fonts/ziplock.ppf")
 screen.font = font
 screen.antialias = Image.X4
 
+animations = {
+    "up": None,
+    "down": None,
+    "left": None,
+    "right": None
+}
+
+for dir in animations.keys():
+    sprites = SpriteSheet(f"assets/bee-{dir}.png", 4, 1)
+    animations[dir] = sprites.animation()
+
 # Colour Constants
-WHITE = brushes.color(255, 255, 255)
 BLACK = brushes.color(0, 0, 0)
-RED = brushes.color(255, 0, 0)
-GREEN = brushes.color(0, 255, 0)
-PLAYER = brushes.color(227, 231, 110)
+PLAYER = brushes.color(227, 231, 110, 125)
 WALL = brushes.color(127, 125, 244)
 BACKGROUND = Image.load("assets/background.png")
 PATH = brushes.color((227 + 60) // 2, (231 + 57) // 2, (110 + 169) // 2)
@@ -244,18 +262,7 @@ class Player(object):
         self.y = y
         self.colour = colour
 
-        self.animations = {
-            "up": None,
-            "down": None,
-            "left": None,
-            "right": None
-        }
-
-        for dir in self.animations.keys():
-            sprites = SpriteSheet(f"assets/bee-{dir}.png", 4, 1)
-            self.animations[dir] = sprites.animation()
-
-        self.current_animation = self.animations["right"]
+        self.current_animation = animations["right"]
 
     def position(self, x, y):
         self.x = x
@@ -267,28 +274,28 @@ class Player(object):
             maze[self.y][self.x] |= W
             self.x -= 1
             maze[self.y][self.x] |= E
-            self.current_animation = self.animations["left"]
+            self.current_animation = animations["left"]
             time.sleep(MOVEMENT_SLEEP)
 
         elif io.BUTTON_C in io.held and maze[self.y][self.x + 1] < (1 << WALL_BITSHIFT):
             maze[self.y][self.x] |= E
             self.x += 1
             maze[self.y][self.x] |= W
-            self.current_animation = self.animations["right"]
+            self.current_animation = animations["right"]
             time.sleep(MOVEMENT_SLEEP)
 
         elif io.BUTTON_UP in io.held and maze[self.y - 1][self.x] < (1 << WALL_BITSHIFT):
             maze[self.y][self.x] |= N
             self.y -= 1
             maze[self.y][self.x] |= S
-            self.current_animation = self.animations["up"]
+            self.current_animation = animations["up"]
             time.sleep(MOVEMENT_SLEEP)
 
         elif io.BUTTON_DOWN in io.held and maze[self.y + 1][self.x] < (1 << WALL_BITSHIFT):
             maze[self.y][self.x] |= S
             self.y += 1
             maze[self.y][self.x] |= N
-            self.current_animation = self.animations["down"]
+            self.current_animation = animations["down"]
             time.sleep(MOVEMENT_SLEEP)
 
     def draw(self):
@@ -343,6 +350,39 @@ def draw_maze():
     player.draw()
 
 
+def shadow_text(text, x, y):
+    screen.brush = brushes.color(20, 40, 60, 100)
+    screen.text(text, x + 1, y + 1)
+    screen.brush = brushes.color(255, 255, 255)
+    screen.text(text, x, y)
+
+
+def center_text(text, y):
+    w, _ = screen.measure_text(text)
+    shadow_text(text, 80 - (w / 2), y)
+
+
+def intro():
+    global state
+
+    image = animations["down"].frame(round(io.ticks / 100))
+
+    screen.blit(BACKGROUND, 0, 0)
+    screen.scale_blit(image, (WIDTH / 2) - 16, 12, 32, 32)
+
+    # draw title
+    screen.font = large_font
+    center_text("Bee a-maze'd!", 38)
+
+    # blink button message
+    if int(io.ticks / 500) % 2:
+        screen.font = font
+        center_text("Press B to start", 68)
+
+    if io.BUTTON_B in io.pressed:
+        state = GameState.PLAYING
+
+
 def init():
     global builder, player
     # Create the maze builder and build the first maze and put
@@ -352,40 +392,43 @@ def init():
     # Create the player object
     player = Player(*start, PLAYER)
 
-    draw_maze()
-
 
 def update():
     global complete, builder, player, level
 
-    draw_maze()
+    if state == GameState.INTRO:
+        intro()
 
-    if not complete:
-        # Update the player's position in the maze
-        player.update(builder.maze)
+    if state == GameState.PLAYING:
 
-        # Check if any player has reached the goal position
-        if player.x == goal.x and player.y == goal.y:
-            complete = True
+        draw_maze()
 
-    if complete:
-        # Draw banner
-        screen.brush = PLAYER
-        screen.draw(shapes.rounded_rectangle(10, CY - 24, WIDTH - 20, 50, 5))
+        if not complete:
+            # Update the player's position in the maze
+            player.update(builder.maze)
 
-        screen.brush = BLACK
-        screen.draw(shapes.rounded_rectangle(10, CY - 24, WIDTH - 20, 50, 5).stroke(2))
+            # Check if any player has reached the goal position
+            if player.x == goal.x and player.y == goal.y:
+                complete = True
 
-        # Draw text
-        screen.brush = BLACK
-        screen.text(f"{text_1_string}", text_1_location[0], text_1_location[1])
-        screen.text(f"{text_2_string}", text_2_location[0], text_2_location[1])
+        if complete:
+            # Draw banner
+            screen.brush = PLAYER
+            screen.draw(shapes.rounded_rectangle(10, CY - 24, WIDTH - 20, 50, 5))
 
-        if io.BUTTON_B in io.pressed:
-            complete = False
-            level += 1
-            build_maze()
-            player.position(*start)
+            screen.brush = BLACK
+            screen.draw(shapes.rounded_rectangle(10, CY - 24, WIDTH - 20, 50, 5).stroke(2))
+
+            # Draw text
+            screen.brush = BLACK
+            screen.text(f"{text_1_string}", text_1_location[0], text_1_location[1])
+            screen.text(f"{text_2_string}", text_2_location[0], text_2_location[1])
+
+            if io.BUTTON_B in io.pressed:
+                complete = False
+                level += 1
+                build_maze()
+                player.position(*start)
 
 
 def on_exit():
