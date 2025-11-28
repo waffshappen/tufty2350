@@ -18,7 +18,6 @@ os.chdir("/system/apps/random_maze")
 
 import gc
 import random
-import time
 from collections import namedtuple
 
 from badgeware import HEIGHT, WIDTH, io, run, SpriteSheet
@@ -261,6 +260,7 @@ class Player(object):
         self.x = x
         self.y = y
         self.colour = colour
+        self.last_move = io.ticks
 
         self.current_animation = animations["right"]
 
@@ -270,33 +270,34 @@ class Player(object):
 
     def update(self, maze):
 
-        if io.BUTTON_A in io.held and maze[self.y][self.x - 1] < (1 << WALL_BITSHIFT):
-            maze[self.y][self.x] |= W
-            self.x -= 1
-            maze[self.y][self.x] |= E
-            self.current_animation = animations["left"]
-            time.sleep(MOVEMENT_SLEEP)
+        if io.ticks - self.last_move > 45:
+            if io.BUTTON_A in io.held and maze[self.y][self.x - 1] < (1 << WALL_BITSHIFT):
+                maze[self.y][self.x] |= W
+                self.x -= 1
+                maze[self.y][self.x] |= E
+                self.current_animation = animations["left"]
+                self.last_move = io.ticks
 
-        elif io.BUTTON_C in io.held and maze[self.y][self.x + 1] < (1 << WALL_BITSHIFT):
-            maze[self.y][self.x] |= E
-            self.x += 1
-            maze[self.y][self.x] |= W
-            self.current_animation = animations["right"]
-            time.sleep(MOVEMENT_SLEEP)
+            elif io.BUTTON_C in io.held and maze[self.y][self.x + 1] < (1 << WALL_BITSHIFT):
+                maze[self.y][self.x] |= E
+                self.x += 1
+                maze[self.y][self.x] |= W
+                self.current_animation = animations["right"]
+                self.last_move = io.ticks
 
-        elif io.BUTTON_UP in io.held and maze[self.y - 1][self.x] < (1 << WALL_BITSHIFT):
-            maze[self.y][self.x] |= N
-            self.y -= 1
-            maze[self.y][self.x] |= S
-            self.current_animation = animations["up"]
-            time.sleep(MOVEMENT_SLEEP)
+            elif io.BUTTON_UP in io.held and maze[self.y - 1][self.x] < (1 << WALL_BITSHIFT):
+                maze[self.y][self.x] |= N
+                self.y -= 1
+                maze[self.y][self.x] |= S
+                self.current_animation = animations["up"]
+                self.last_move = io.ticks
 
-        elif io.BUTTON_DOWN in io.held and maze[self.y + 1][self.x] < (1 << WALL_BITSHIFT):
-            maze[self.y][self.x] |= S
-            self.y += 1
-            maze[self.y][self.x] |= N
-            self.current_animation = animations["down"]
-            time.sleep(MOVEMENT_SLEEP)
+            elif io.BUTTON_DOWN in io.held and maze[self.y + 1][self.x] < (1 << WALL_BITSHIFT):
+                maze[self.y][self.x] |= S
+                self.y += 1
+                maze[self.y][self.x] |= N
+                self.current_animation = animations["down"]
+                self.last_move = io.ticks
 
     def draw(self):
         image = self.current_animation.frame(round(io.ticks / 100))
@@ -420,6 +421,7 @@ def update():
             screen.draw(shapes.rounded_rectangle(10, CY - 24, WIDTH - 20, 50, 5).stroke(2))
 
             # Draw text
+            screen.font = font
             screen.brush = BLACK
             screen.text(f"{text_1_string}", text_1_location[0], text_1_location[1])
             screen.text(f"{text_2_string}", text_2_location[0], text_2_location[1])
