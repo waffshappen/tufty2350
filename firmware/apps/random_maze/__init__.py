@@ -220,7 +220,7 @@ class MazeBuilder:
     def maze_height(self):
         return (self.height * 2) + 1
 
-    def draw(self, display):
+    def draw(self):
         # Draw the maze we have built. Each '1' in the array represents a wall
         for y in range(self.grid_rows):
             for x in range(self.grid_columns):
@@ -235,10 +235,6 @@ class MazeBuilder:
                 else:
                     sprite = (1, path)
 
-                if y == 1 and x == 0:
-                    print(bin(wall))
-                    print(self.grid_rows, self.grid_columns)
-
                 screen.scale_blit(hedge.sprite(*sprite), px, py, wall_separation, wall_separation)
 
 
@@ -247,6 +243,19 @@ class Player(object):
         self.x = x
         self.y = y
         self.colour = colour
+
+        self.animations = {
+            "up": None,
+            "down": None,
+            "left": None,
+            "right": None
+        }
+
+        for dir in self.animations.keys():
+            sprites = SpriteSheet(f"assets/bee-{dir}.png", 4, 1)
+            self.animations[dir] = sprites.animation()
+
+        self.current_animation = self.animations["right"]
 
     def position(self, x, y):
         self.x = x
@@ -258,31 +267,36 @@ class Player(object):
             maze[self.y][self.x] |= W
             self.x -= 1
             maze[self.y][self.x] |= E
+            self.current_animation = self.animations["left"]
             time.sleep(MOVEMENT_SLEEP)
 
         elif io.BUTTON_C in io.held and maze[self.y][self.x + 1] < (1 << WALL_BITSHIFT):
             maze[self.y][self.x] |= E
             self.x += 1
             maze[self.y][self.x] |= W
+            self.current_animation = self.animations["right"]
             time.sleep(MOVEMENT_SLEEP)
 
         elif io.BUTTON_UP in io.held and maze[self.y - 1][self.x] < (1 << WALL_BITSHIFT):
             maze[self.y][self.x] |= N
             self.y -= 1
             maze[self.y][self.x] |= S
+            self.current_animation = self.animations["up"]
             time.sleep(MOVEMENT_SLEEP)
 
         elif io.BUTTON_DOWN in io.held and maze[self.y + 1][self.x] < (1 << WALL_BITSHIFT):
             maze[self.y][self.x] |= S
             self.y += 1
             maze[self.y][self.x] |= N
+            self.current_animation = self.animations["down"]
             time.sleep(MOVEMENT_SLEEP)
 
-    def draw(self, display):
-        screen.brush = self.colour
-        screen.draw(shapes.rectangle(self.x * wall_separation + offset_x,
-                                     self.y * wall_separation + offset_y,
-                                     wall_size, wall_size))
+    def draw(self):
+        image = self.current_animation.frame(round(io.ticks / 100))
+
+        screen.scale_blit(image, self.x * wall_separation + offset_x,
+                          self.y * wall_separation + offset_y,
+                          wall_size, wall_size)
 
 
 def build_maze():
@@ -309,27 +323,24 @@ def build_maze():
     goal = Position(builder.grid_columns - 2, 1)
 
 
+# flower to mark our goal
+flower = Image.load("assets/flower.png")
+
+
 def draw_maze():
     # Clear the screen to the background colour
     screen.blit(BACKGROUND, 0, 0)
 
     # Draw the maze walls
-    builder.draw(screen)
+    builder.draw()
 
-    # Draw the start location square
-    screen.brush = RED
-    screen.draw(shapes.rectangle(start.x * wall_separation + offset_x,
-                                 start.y * wall_separation + offset_y,
-                                 wall_size, wall_size))
-
-    # Draw the goal location square
-    screen.brush = GREEN
-    screen.draw(shapes.rectangle(goal.x * wall_separation + offset_x,
-                                 goal.y * wall_separation + offset_y,
-                                 wall_size, wall_size))
+    # Draw the goal location flower
+    screen.scale_blit(flower, goal.x * wall_separation + offset_x,
+                      goal.y * wall_separation + offset_y,
+                      wall_size, wall_size)
 
     # Draw the player
-    player.draw(screen)
+    player.draw()
 
 
 def init():
