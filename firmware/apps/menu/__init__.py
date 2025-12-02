@@ -22,7 +22,7 @@ from icon import Icon
 apps = [
     ("Christmas Countdown", "christmas"),
     ("Snarky Sciuridae", "badgepet"),
-    ("Sketchy Sketch", "sketch"),
+    ("Sketchy Sketch", "sketchysketch"),
     ("Plucky Cluck", "pluckycluck"),
     ("Hydrate", "hydrate"),
     ("Bee Amaze'd", "bee_amazed"),
