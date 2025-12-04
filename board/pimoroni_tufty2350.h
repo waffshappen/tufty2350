@@ -9,8 +9,6 @@
 //       SHOULD ONLY CONSIST OF PREPROCESSOR DIRECTIVES
 // -----------------------------------------------------
 
-// This header may be included by other board headers as "boards/pico2_w.h"
-
 // pico_cmake_set PICO_PLATFORM=rp2350
 // pico_cmake_set PICO_CYW43_SUPPORTED = 1
 
@@ -47,8 +45,6 @@
 // button and used to determine long press status
 #define BW_RESET_SW      (14) // No pull, active high?
 
-//#define BW_CHARGE_STAT   (12)
-
 // I2C power for talking to RTC
 #define BW_SW_POWER_EN   (41)
 
@@ -83,28 +79,18 @@
 #define PICO_DEFAULT_I2C 0
 #endif
 #ifndef PICO_DEFAULT_I2C_SDA_PIN
-#define PICO_DEFAULT_I2C_SDA_PIN 4
+#define PICO_DEFAULT_I2C_SDA_PIN BW_RTC_I2C_SDA
 #endif
 #ifndef PICO_DEFAULT_I2C_SCL_PIN
-#define PICO_DEFAULT_I2C_SCL_PIN 5
+#define PICO_DEFAULT_I2C_SCL_PIN BW_RTC_I2C_SCL
 #endif
 
 // --- SPI ---
-#ifndef PICO_DEFAULT_SPI
-#define PICO_DEFAULT_SPI 0
-#endif
-#ifndef PICO_DEFAULT_SPI_SCK_PIN
-#define PICO_DEFAULT_SPI_SCK_PIN 18
-#endif
-#ifndef PICO_DEFAULT_SPI_TX_PIN
-#define PICO_DEFAULT_SPI_TX_PIN 19
-#endif
-#ifndef PICO_DEFAULT_SPI_RX_PIN
-#define PICO_DEFAULT_SPI_RX_PIN 16
-#endif
-#ifndef PICO_DEFAULT_SPI_CSN_PIN
-#define PICO_DEFAULT_SPI_CSN_PIN 17
-#endif
+// no PICO_DEFAULT_SPI
+// no PICO_DEFAULT_SPI_SCK_PIN
+// no PICO_DEFAULT_SPI_TX_PIN
+// no PICO_DEFAULT_SPI_RX_PIN
+// no PICO_DEFAULT_SPI_CSN_PIN
 
 // --- FLASH ---
 
@@ -119,16 +105,11 @@
 #define PICO_FLASH_SIZE_BYTES (16 * 1024 * 1024)
 #endif
 
+// --- CYW43 ---
+
 #ifndef CYW43_WL_GPIO_COUNT
 #define CYW43_WL_GPIO_COUNT 3
 #endif
-
-// The GPIO Pin used to read VBUS to determine if the device is battery powered.
-// no PICO_VBUS_PIN
-
-// The GPIO Pin used to monitor VSYS. Typically you would use this with ADC.
-// There is an example in adc/read_vsys in pico-examples.
-// no PICO_VSYS_PIN
 
 // pico_cmake_set_default PICO_RP2350_A2_SUPPORTED = 1
 #ifndef PICO_RP2350_A2_SUPPORTED
