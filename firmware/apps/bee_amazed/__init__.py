@@ -13,8 +13,8 @@ Controls:
 import os
 import sys
 
-sys.path.insert(0, "/system/apps/random_maze")
-os.chdir("/system/apps/random_maze")
+sys.path.insert(0, "/system/apps/bee_amazed")
+os.chdir("/system/apps/bee_amazed")
 
 import gc
 import random
