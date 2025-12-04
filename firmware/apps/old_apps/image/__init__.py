@@ -4,7 +4,6 @@ import tufty2350
 import jpegdec
 import pngdec
 from tufty2350 import HEIGHT, WIDTH
-from picovector import ANTIALIAS_BEST, PicoVector, Polygon, Transform
 
 import badgeware_os
 

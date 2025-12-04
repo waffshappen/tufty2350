@@ -17,8 +17,7 @@ from urllib.urequest import urlopen
 import math
 
 import network
-from badgeware import (HEIGHT, WIDTH, Image, Matrix, PixelFont, SpriteSheet,
-                       brushes, io, run, screen, shapes)
+from badgeware import SpriteSheet, run
 
 icons = SpriteSheet("ornament01.png", 1, 1)
 ornament = icons.sprite(0, 0)
@@ -138,7 +137,7 @@ def fake_number():
 
 
 def centre_text(text, y):
-    x = (WIDTH / 2) - (screen.measure_text(text)[0] / 2)
+    x = (screen.width / 2) - (screen.measure_text(text)[0] / 2)
     screen.text(text, x, y)
 
 
@@ -155,7 +154,7 @@ class Snowflake:
 
     def __init__(self):
 
-        self.x = randint(0, WIDTH)
+        self.x = randint(0, screen.width)
         self.y = -20
         self.d = randint(5, 7)
         self.gravity = 0
@@ -228,7 +227,7 @@ def update():
     if len(Snowflake.flakes) < 45:
         Snowflake()
 
-    Snowflake.flakes = [flake for flake in Snowflake.flakes if flake.y < HEIGHT - 10]
+    Snowflake.flakes = [flake for flake in Snowflake.flakes if flake.y < screen.height - 10]
     Snowflake.update()
 
     if get_connection_details():
@@ -248,22 +247,22 @@ def update():
   
             # box shadow
             screen.brush = brushes.color(0, 0, 0, 70)
-            screen.draw(shapes.rounded_rectangle(15 + 4, 25 + 4, WIDTH - 30, HEIGHT - 50, 5))
+            screen.draw(shapes.rounded_rectangle(15 + 4, 25 + 4, screen.width - 30, screen.height - 50, 5))
 
             # main box
             screen.brush = brushes.color(255, 255, 255, 150)
-            screen.draw(shapes.rounded_rectangle(15, 25, WIDTH - 30, HEIGHT - 50, 5))
+            screen.draw(shapes.rounded_rectangle(15, 25, screen.width - 30, screen.height - 50, 5))
 
             # box outline
             screen.brush = brushes.color(255, 255, 255, 175)
-            screen.draw(shapes.rounded_rectangle(15, 25, WIDTH - 30, HEIGHT - 50, 5).stroke(2))
+            screen.draw(shapes.rounded_rectangle(15, 25, screen.width - 30, screen.height - 50, 5).stroke(2))
 
-            screen.scale_blit(ornament, 5, HEIGHT - 40, 32, 32)
+            screen.scale_blit(ornament, 5, screen.height - 40, 32, 32)
 
             screen.brush = brushes.color(*STAR_YELLOW)
             star = shapes.star(0, 0, 5, 9, 16)
             star_rotate = math.sin(io.ticks / 1000) * 100
-            star.transform = Matrix().translate(WIDTH - 20, 25).rotate(star_rotate)
+            star.transform = Matrix().translate(screen.width - 20, 25).rotate(star_rotate)
             screen.draw(star)
             screen.brush = brushes.color(0, 0, 0, 100)
             screen.draw(star.stroke(2))

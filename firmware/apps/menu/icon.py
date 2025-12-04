@@ -1,7 +1,5 @@
 import math
 
-from badgeware import Matrix, brushes, io, screen, shapes
-
 orange = brushes.color(246, 135, 4)
 blue = brushes.color(28, 181, 202)
 red = brushes.color(230, 60, 46)

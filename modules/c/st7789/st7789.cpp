@@ -182,7 +182,7 @@ namespace pimoroni {
     dma_channel_set_read_addr(pd_st_dma, &backbuffer, true);
   }
 
-  void ST7789::update() {
+  void ST7789::update(bool fullres) {
     dma_channel_wait_for_finish_blocking(pd_st_dma);
     while(!pio_sm_is_tx_fifo_empty(parallel_pio, parallel_pd_sm))
       ;
@@ -196,22 +196,41 @@ namespace pimoroni {
       pio_sm_set_clkdiv(parallel_pio, parallel_sm, fmax(1.0f, ceil(float(sys_clk_hz) / max_pio_clk)));
     }
 
-    uint8_t *src = (uint8_t *)framebuffer;
-    //uint16_t *dst = (uint16_t *)backbuffer;
-    for(int y = 0; y < height; y++) {
-      for(int x = 0; x < width * 2; x += 2) {
-        //*(dst + height) = *dst = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
-        uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
-        backbuffer[x * height + y] = pixel;
-        backbuffer[x * height + y + height] = pixel;
-        //dst++;
-        src += 4;
+    if(fullres) {
+      gpio_set_pulls(dc, false, false);
+      gpio_set_dir(dc, GPIO_OUT);
+      uint8_t cmd = reg::RAMWR;
+      gpio_put(dc, 0); // command mode
+      gpio_put(cs, 0);
+      write_blocking_parallel(&cmd, 1);
+      gpio_put(dc, 1); // data mode
+      //uint8_t *src = (uint8_t *)framebuffer;
+      for(int x = 0; x < fullres_width; x++) {
+        for(int y = 0; y < fullres_height; y++) {
+          uint8_t *src = (uint8_t *)(framebuffer + (y * fullres_width + x));
+          uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
+          backbuffer[y] = __builtin_bswap16(pixel);
+        }
+        write_blocking_parallel((uint8_t *)backbuffer, fullres_height * 2);
       }
-      // Skip the vertically pixel-doubled row we set above
-      //dst += width;
-    }
+    } else {
+      uint8_t *src = (uint8_t *)framebuffer;
+      //uint16_t *dst = (uint16_t *)backbuffer;
+      for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width * 2; x += 2) {
+          //*(dst + height) = *dst = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
+          uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
+          backbuffer[x * height + y] = pixel;
+          backbuffer[x * height + y + height] = pixel;
+          //dst++;
+          src += 4;
+        }
+        // Skip the vertically pixel-doubled row we set above
+        //dst += width;
+      }
 
-    write_buffer_async();
+      write_buffer_async();
+    }
   }
 
   void ST7789::set_backlight(uint8_t brightness) {

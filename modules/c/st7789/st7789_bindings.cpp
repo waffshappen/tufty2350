@@ -45,9 +45,9 @@ mp_obj_t st7789___del__(mp_obj_t self_in) {
     return mp_const_none;
 }
 
-mp_obj_t st7789_update(mp_obj_t self_in) {
+mp_obj_t st7789_update(mp_obj_t self_in, mp_obj_t fullres_in) {
     (void)self_in;
-    display->update();
+    display->update(mp_obj_is_true(fullres_in));
     return mp_const_none;
 }
 
@@ -79,7 +79,7 @@ mp_int_t st7789_get_framebuffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, mp_
     (void)self_in;
     (void)flags;
     bufinfo->buf = display->get_framebuffer();
-    bufinfo->len = 160 * 120 * 4;
+    bufinfo->len = 320 * 240 * 4;
     bufinfo->typecode = 'B';
     return 0;
 }

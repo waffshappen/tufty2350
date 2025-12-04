@@ -25,6 +25,8 @@ namespace pimoroni {
   private:
     int width = 160;
     int height = 120;
+    int fullres_width = 320;
+    int fullres_height = 240;
 
     // interface pins
     uint cs = 27;
@@ -155,7 +157,7 @@ namespace pimoroni {
       }
     }
 
-    void update();
+    void update(bool fullres);
     void set_backlight(uint8_t brightness);
     uint32_t *get_framebuffer();
     void command(uint8_t command, size_t len = 0, const char *data = NULL);

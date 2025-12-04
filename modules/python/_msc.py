@@ -1,10 +1,7 @@
-from badgeware import screen, brushes, shapes, PixelFont, io, run, Matrix
-from st7789 import ST7789
+from badgeware import run
 import rp2
 import random
 
-
-display = ST7789()
 
 rp2.enable_msc()
 

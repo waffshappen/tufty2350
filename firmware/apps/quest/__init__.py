@@ -6,7 +6,7 @@ os.chdir("/system/apps/quest")
 
 import math
 import random
-from badgeware import State, PixelFont, Image, brushes, screen, io, shapes, run
+from badgeware import State, run
 from beacon import GithubUniverseBeacon
 from aye_arr.nec import NECReceiver
 import ui

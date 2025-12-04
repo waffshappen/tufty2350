@@ -1,8 +1,7 @@
 import math
 import random
 
-from badgeware import (brushes, get_battery_level, io, is_charging, screen,
-                       shapes)
+from badgeware import get_battery_level, is_charging
 
 black = brushes.color(0, 0, 0)
 background = brushes.color(60, 15, 10)

@@ -1,14 +1,14 @@
 import sys
 import os
 import math
-from badgeware import run, WIDTH, HEIGHT, clamp
+from badgeware import run, clamp
 
 sys.path.insert(0, "/system/apps/badge")
 os.chdir("/system/apps/badge")
 
 
-CX = WIDTH / 2
-CY = HEIGHT / 2
+CX = screen.width / 2
+CY = screen.height / 2
 
 screen.antialias = screen.X2
 

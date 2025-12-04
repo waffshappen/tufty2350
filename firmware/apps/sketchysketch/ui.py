@@ -1,5 +1,4 @@
 import math
-from badgeware import screen, PixelFont, shapes, brushes, io, Image
 
 screen.antialias = Image.X2
 canvas_area = (10, 15, 140, 85)

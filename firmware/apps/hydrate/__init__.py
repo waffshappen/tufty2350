@@ -5,10 +5,10 @@ import math
 sys.path.insert(0, "/system/apps/hydrate")
 os.chdir("/system/apps/hydrate")
 
-from badgeware import run, State, WIDTH, HEIGHT, clamp
+from badgeware import run, State, clamp
 
-CX = WIDTH / 2
-CY = HEIGHT / 2
+CX = screen.width / 2
+CY = screen.height / 2
 
 state = {
     "current": 0,
@@ -72,8 +72,8 @@ def draw_graph(x, y, r, value):
 
 
 MENU_OPEN_Y = CY
-MENU_CLOSED_Y = HEIGHT - 15
-menu_pos = [0, MENU_CLOSED_Y, WIDTH, HEIGHT - CY]
+MENU_CLOSED_Y = screen.height - 15
+menu_pos = [0, MENU_CLOSED_Y, screen.width, screen.height - CY]
 speed = 11.0
 show_menu = False
 menu_value = 0
@@ -116,7 +116,7 @@ def draw_menu():
         screen.text(t, tx, y + 42)
         screen.text("-", 27, y + 42)
         screen.text("+", 127, y + 42)
-        screen.text("OK", WIDTH - 16, y + 18)
+        screen.text("OK", screen.width - 16, y + 18)
 
         # gold star for meeting your daily goal! :)
         sx, sy = CX, y + 23

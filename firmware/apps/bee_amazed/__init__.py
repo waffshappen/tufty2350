@@ -20,7 +20,7 @@ import gc
 import random
 from collections import namedtuple
 
-from badgeware import HEIGHT, WIDTH, io, run, SpriteSheet
+from badgeware import run, SpriteSheet
 
 
 class GameState:
@@ -58,7 +58,7 @@ WALL = brushes.color(127, 125, 244)
 BACKGROUND = Image.load("assets/background.png")
 PATH = brushes.color((227 + 60) // 2, (231 + 57) // 2, (110 + 169) // 2)
 
-CX, CY = WIDTH / 2, HEIGHT / 2
+CX, CY = screen.width / 2, screen.height / 2
 
 # Gameplay Constants
 Position = namedtuple("Position", ("x", "y"))
@@ -310,12 +310,12 @@ def build_maze():
     height = random.randrange(MIN_MAZE_HEIGHT, MAX_MAZE_HEIGHT)
     builder.build(width + difficulty, height + difficulty)
 
-    wall_separation = min(HEIGHT // builder.grid_rows,
-                          WIDTH // builder.grid_columns)
+    wall_separation = min(screen.height // builder.grid_rows,
+                          screen.width // builder.grid_columns)
     wall_size = wall_separation - WALL_GAP
 
-    offset_x = (WIDTH - (builder.grid_columns * wall_separation) + WALL_GAP) // 2
-    offset_y = (HEIGHT - (builder.grid_rows * wall_separation) + WALL_GAP) // 2
+    offset_x = (screen.height - (builder.grid_columns * wall_separation) + WALL_GAP) // 2
+    offset_y = (screen.width - (builder.grid_rows * wall_separation) + WALL_GAP) // 2
 
     start = Position(1, builder.grid_rows - 2)
     goal = Position(builder.grid_columns - 2, 1)

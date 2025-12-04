@@ -6,7 +6,6 @@ import powman
 import st7789
 from machine import ADC, I2C, Pin, Timer
 from pcf85063a import PCF85063A
-from picovector import PixelFont, brushes, screen, shapes
 import gc
 
 display = st7789.ST7789()
@@ -168,7 +167,7 @@ class Tests:
 
         screen.brush = WHITE
         screen.text(str(error), WIDTH / 2 - (tw / 2), HEIGHT / 2 - th / 2)
-        display.update()
+        display.update(False)
 
     def test_buttons(self):
         # Check if all buttons have been pressed
@@ -201,7 +200,7 @@ class Tests:
     def test_psram(self):
         ram_free = round(gc.mem_free() / 1000000, 1)
 
-        if ram_free < 8.2 or not powman._test_psram_cs():
+        if ram_free < 6.0 or not powman._test_psram_cs():
             raise Exception("E18")
 
     # Toggle the case lights on the back of the badge
@@ -289,6 +288,7 @@ class Tests:
             print(e)
             while True:
                 self.display_error(e)
+                time.sleep(0.1)
 
         b.irq(self.exit_handler)
         self.cl_timer.deinit()
@@ -306,7 +306,7 @@ class Tests:
             for line, _width in text_lines:
                 screen.text(line, 5, y, TEXT_SIZE - 1)
                 y += 22
-            display.update()
+            display.update(False)
             time.sleep(0.5)
 
     # Interrupt based button testing checks the button gpio
@@ -345,7 +345,7 @@ class Tests:
             for line, _width in text_lines:
                 screen.text(line, 5, y, TEXT_SIZE)
                 y += 15
-            display.update()
+            display.update(False)
             # Time out to catch the user not removing the USB
             # Or to end the test if there's a failure on VBUS_DETECT
             if time.time() - start_time < 5:
@@ -379,7 +379,7 @@ class Tests:
                 x, y = self.buttons[button][1]
                 screen.draw(shapes.rounded_rectangle(x, y, 10, 10, 3))
 
-        display.update()
+        display.update(False)
 
 
 t = Tests()

@@ -7,7 +7,7 @@ os.chdir("/system/apps/badgepet")
 
 import ui
 from vpet import Pet
-from badgeware import io, run, State
+from badgeware import run, State
 
 pet = Pet(95)  # create pet!
 

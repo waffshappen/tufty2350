@@ -7,8 +7,7 @@ os.chdir("/system/apps/menu")
 import math
 
 import ui
-from badgeware import (Image, PixelFont, SpriteSheet, brushes, file_exists, io,
-                       is_dir, run, screen, shapes)
+from badgeware import SpriteSheet, file_exists, is_dir, run
 from icon import Icon
 
 # screen.antialias = Image.X4

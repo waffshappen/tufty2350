@@ -13,8 +13,7 @@ sys.path.insert(0, APP_DIR)
 
 import math
 
-from badgeware import (HEIGHT, WIDTH, Image, PixelFont, brushes, io,
-                       run, screen, shapes)
+from badgeware import run
 from breakout_bme280 import BreakoutBME280
 from breakout_ltr559 import BreakoutLTR559
 from lsm6ds3 import LSM6DS3, NORMAL_MODE_104HZ
@@ -47,7 +46,7 @@ MOVE_COLOUR = (120, 170, 120)
 
 # viewport for the full screen window
 # we'll draw our sensor output to this image and blit it within a "window"
-win = Image(0, 0, WIDTH - 27, HEIGHT - 28)
+win = Image(0, 0, screen.width - 27, screen.height - 28)
 
 
 def centre_text(text, w, y, image=win):
@@ -220,8 +219,8 @@ class Widget:
         # position and size for the full screen window
         self.wx = 10
         self.wy = 10
-        self.ww = WIDTH - 20
-        self.wh = HEIGHT - 20
+        self.ww = screen.width - 20
+        self.wh = screen.height - 20
 
         self.selected = False
         self.full_view = False
@@ -233,10 +232,10 @@ class Widget:
         # Will check for free space left to right, top to bottom.
         while any(self.check_layout(w) for w in Widget.widgets):
             self.x += 2
-            if self.x + self.w > WIDTH - self.margin[0]:
+            if self.x + self.w > screen.width - self.margin[0]:
                 self.x = self.margin[0]
                 self.y += 2
-                if self.y + self.h > HEIGHT - self.margin[1]:
+                if self.y + self.h > screen.height - self.margin[1]:
                     raise RuntimeError("One or more widgets unable to fit into bounds")
 
         Widget.widgets.append(self)
@@ -314,10 +313,10 @@ class Widget:
             screen.blit(win, self.wx + 4, self.wy + 5)
 
             # draw the close button
-            screen.draw(shapes.rounded_rectangle(71, HEIGHT - 28, 18, 15, 3, 3, 0, 0))
+            screen.draw(shapes.rounded_rectangle(71, screen.height - 28, 18, 15, 3, 3, 0, 0))
             screen.font = font_absolute
             screen.brush = brushes.color(255, 255, 255, 120)
-            screen.text("X", 76, HEIGHT - 29)
+            screen.text("X", 76, screen.height - 29)
 
     @staticmethod
     def update():
@@ -346,18 +345,18 @@ def update():
     screen.brush = brushes.color(0, 0, 0)
     screen.clear()
     screen.brush = BACKGROUND
-    screen.draw(shapes.rounded_rectangle(0, 0, WIDTH, HEIGHT, 5))
+    screen.draw(shapes.rounded_rectangle(0, 0, screen.width, screen.height, 5))
 
     screen.font = font_memo
     screen.brush = brushes.color(175, 175, 175)
-    screen.draw(shapes.rounded_rectangle(0, 0, WIDTH, 20, 5, 5, 0, 0))
+    screen.draw(shapes.rounded_rectangle(0, 0, screen.width, 20, 5, 5, 0, 0))
     screen.brush = brushes.color(0, 0, 0)
     screen.text("Sensor Suite", 36 + 1, 1 + 1)
     screen.brush = brushes.color(255, 255, 255)
     screen.text("Sensor Suite", 36, 1)
 
     screen.brush = brushes.color(155, 155, 155)
-    screen.draw(shapes.line(0, 19, WIDTH, 19, 1))
+    screen.draw(shapes.line(0, 19, screen.width, 19, 1))
 
     Widget.update()
 

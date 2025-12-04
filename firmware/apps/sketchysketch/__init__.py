@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, "/system/apps/sketchsketch")
 os.chdir("/system/apps/sketchysketch")
 
-from badgeware import Image, brushes, shapes, screen, io, run
+from badgeware import run
 import ui
 
 

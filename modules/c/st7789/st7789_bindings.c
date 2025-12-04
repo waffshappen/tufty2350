@@ -3,7 +3,7 @@
 /***** Module Functions *****/
 
 static MP_DEFINE_CONST_FUN_OBJ_1(st7789___del___obj, st7789___del__);
-static MP_DEFINE_CONST_FUN_OBJ_1(st7789_update_obj, st7789_update);
+static MP_DEFINE_CONST_FUN_OBJ_2(st7789_update_obj, st7789_update);
 static MP_DEFINE_CONST_FUN_OBJ_2(st7789_set_backlight_obj, st7789_set_backlight);
 static MP_DEFINE_CONST_FUN_OBJ_3(st7789_command_obj, st7789_command);
 
