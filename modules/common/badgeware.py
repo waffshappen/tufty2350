@@ -13,6 +13,33 @@ import builtins
 
 import picovector
 
+_CASE_LIGHTS = [machine.PWM(machine.Pin.board.CL0), machine.PWM(machine.Pin.board.CL1),
+                machine.PWM(machine.Pin.board.CL2), machine.PWM(machine.Pin.board.CL3)]
+
+for led in _CASE_LIGHTS:
+    led.freq(500)
+
+
+def set_case_led(led=None, value=None):
+
+    if led is None or value is None:
+        raise ValueError("LED and brightness must be provided!")
+
+    if not isinstance(led, int):
+        raise TypeError("LED must be a number between 0 and 3")
+
+    if led < 0 or led > len(_CASE_LIGHTS) - 1:
+        raise ValueError("LED out of range!")
+
+    if not isinstance(value, (int, float)):
+        raise TypeError("brightness must be a number between 0.0 and 1.0")
+
+    if value < 0 or value > 1.0:
+        raise ValueError("brightness must be between 0.0 and 1.0")
+
+    value = int(value * 65535)
+    _CASE_LIGHTS[led].duty_u16(value)
+
 
 def get_light():
     # TODO: Returning the raw u16 is a little meh here, can we do an approx lux conversion?
@@ -414,7 +441,6 @@ class State:
 
         State.save(app, defaults)
         return False
-
 
 
 MAX_BACKLIGHT_SAMPLES = 30
