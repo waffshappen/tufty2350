@@ -50,7 +50,8 @@ def get_connection_details():
     global WIFI_PASSWORD, WIFI_SSID
 
     if WIFI_SSID is not None:
-        return True
+        if len(WIFI_SSID) > 0:
+            return True
 
     try:
         sys.path.insert(0, "/")
@@ -60,7 +61,7 @@ def get_connection_details():
         WIFI_PASSWORD = None
         WIFI_SSID = None
 
-    if not WIFI_SSID:
+    if len(WIFI_SSID) == 0:
         return False
 
     return True
@@ -244,7 +245,7 @@ def update():
                     next(task)
                 except StopIteration:
                     task = None
-  
+
             # box shadow
             screen.pen = color.rgb(0, 0, 0, 70)
             screen.shape(shape.rounded_rectangle(15 + 4, 25 + 4, screen.width - 30, screen.height - 50, 5))
@@ -266,13 +267,13 @@ def update():
             screen.shape(star)
             screen.pen = color.rgb(0, 0, 0, 100)
             screen.shape(star.stroke(2))
-            
+
             pulse = min(117 + math.sin(io.ticks * 1000) * 10, 255)
             screen.pen = color.rgb(10, pulse, 51)
             screen.font = font_ziplock
 
             centre_text(f"{days_remaining if days_remaining else fake_number()}", 40)
-            
+
             screen.pen = color.rgb(10, 117, 51)
             screen.font = font_yolk
             centre_text("Sleeps Until Christmas!", 65)
