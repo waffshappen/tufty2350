@@ -31,8 +31,8 @@ for key in id_socials.keys():
 # id card variables
 id_body = shape.rounded_rectangle(0, 0, 140, 100, 7)
 id_outline = shape.rounded_rectangle(0, 0, 140, 100, 7).stroke(2)
-hue = 0.0
-saturation = 0.0
+hue = 255
+chroma = 0
 background = color.rgb(255, 255, 255)
 flip = False
 flip_start = 0
@@ -41,43 +41,6 @@ card_pos = (10, 10)
 
 small_font = pixel_font.load("/system/assets/fonts/winds.ppf")
 large_font = pixel_font.load("/system/assets/fonts/nope.ppf")
-
-
-# Source - https://stackoverflow.com/a
-# Posted by Tcll, modified by community. See post 'Timeline' for change history
-# Retrieved 2025-12-04, License - CC BY-SA 4.0
-
-scalar = 1.0
-
-
-def hsv_to_rgb(h: scalar, s: scalar, v: scalar, a: scalar) -> tuple:
-    a = int(255 * a)
-    if s:
-        if h == 1.0:
-            h = 0.0
-        i = int(h * 6.0)
-        f = h * 6.0 - i
-
-        w = int(255 * (v * (1.0 - s)))
-        q = int(255 * (v * (1.0 - s * f)))
-        t = int(255 * (v * (1.0 - s * (1.0 - f))))
-        v = int(255 * v)
-
-        if i == 0:
-            return (v, t, w, a)
-        if i == 1:
-            return (q, v, w, a)
-        if i == 2:
-            return (w, v, t, a)
-        if i == 3:
-            return (w, q, v, a)
-        if i == 4:
-            return (t, w, v, a)
-        if i == 5:
-            return (v, w, q, a)
-    else:
-        v = int(255 * v)
-        return (v, v, v, a)
 
 
 def draw_background():
@@ -114,21 +77,19 @@ def init():
     pass
 
 
-def change_background(h=None, s=None):
+def change_background(h=None, c=None):
     # a little helper to change the background color
-    global background, hue, saturation
+    global background, hue, chroma
 
     if h:
         hue += h
-        hue = hue % 1
-        rgb = hsv_to_rgb(hue, saturation, 1.0, 1.0)
-        background = color.rgb(*rgb)
+        hue = hue % 255
+        background = color.oklch(255, chroma, hue)
 
-    if s:
-        saturation += s
-        saturation = clamp(saturation, 0.0, 1.0)
-        rgb = hsv_to_rgb(hue, saturation, 1.0, 1.0)
-        background = color.rgb(*rgb)
+    if c:
+        chroma += c
+        chroma = clamp(chroma, 0, 255)
+        background = background = color.oklch(255, chroma, hue)
 
 
 def update():
@@ -152,16 +113,16 @@ def update():
         rear_view = not rear_view
 
     if io.BUTTON_UP in io.held:
-        change_background(h=0.01)
+        change_background(h=5)
 
     if io.BUTTON_DOWN in io.held:
-        change_background(h=-0.01)
+        change_background(h=5)
 
     if io.BUTTON_C in io.held:
-        change_background(s=0.1)
+        change_background(c=5)
 
     if io.BUTTON_A in io.held:
-        change_background(s=-0.1)
+        change_background(c=-5)
 
     if flip:
         # create a spin animation that runs over 100ms
