@@ -89,7 +89,7 @@ def change_background(h=None, c=None):
     if c:
         chroma += c
         chroma = clamp(chroma, 0, 255)
-        background = background = color.oklch(255, chroma, hue)
+        background = color.oklch(255, chroma, hue)
 
 
 def update():
