@@ -41,25 +41,25 @@ def draw_graph(x, y, r, value):
     v = clamp(value, 0, state["goal"])
 
     # scale the current amount in ml to degrees for our graph
-    v = graph_max - (v * (graph_max / state["goal"]))
+    v = (v * (graph_max / state["goal"]))
 
     # rotate and position it so 0 is at the top
     pie = shape.pie(0, 0, r, 0, v)
-    pie.transform = mat3().translate(x, y).rotate(180)
+    pie.transform = mat3().translate(x, y)
 
     # Draw the  remaining non moving elements of the graph
     screen.pen = SHADOW
     screen.shape(shape.circle(x + 2, y + 4, r))
 
-    screen.pen = BLUE2 if not goal_met() else GREEN
+    screen.pen = BLUE3 if not goal_met() else GREEN
     screen.shape(shape.circle(x, y, r))
 
-    screen.pen = BLUE3
+    screen.pen = BLUE2
     screen.shape(pie)
     screen.pen = WHITE
-    screen.shape(shape.circle(x - 1, y, r - 10))
+    screen.shape(shape.circle(x, y, r - 8))
     screen.pen = WHITE
-    screen.shape(shape.circle(x, y, r - 1).stroke(2))
+    screen.shape(shape.circle(x, y, r).stroke(2))
 
     # if the graph is big enough, put the text in the centre.
     if r > 30:
