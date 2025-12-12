@@ -1,7 +1,8 @@
 import math
 
-screen.antialias = image.X2
-canvas_area = (10, 15, 140, 85)
+screen.antialias = image.X4
+mode(HIRES)
+canvas_area = (10, 15, screen.width - 20, screen.height - 35)
 
 font = pixel_font.load("/system/assets/fonts/vest.ppf")
 
@@ -9,15 +10,15 @@ font = pixel_font.load("/system/assets/fonts/vest.ppf")
 def draw_background():
     # fill the background in that classic red...
     screen.pen = color.rgb(170, 45, 40)
-    screen.shape(shape.rectangle(0, 0, 160, 120))
+    screen.shape(shape.rectangle(0, 0, screen.width, screen.height))
 
     # draw the embossed gold logo
     screen.font = font
     w, _ = screen.measure_text("Sketchy Sketch")
     screen.pen = color.rgb(240, 210, 160)
-    screen.text("Sketchy Sketch", 80 - (w / 2) - 1, -1)
+    screen.text("Sketchy Sketch", (screen.width / 2) - (w / 2) - 1, -1)
     screen.pen = color.rgb(190, 140, 80, 100)
-    screen.text("Sketchy Sketch", 80 - (w / 2), 0)
+    screen.text("Sketchy Sketch", (screen.width / 2) - (w / 2), 0)
 
     # draw the canvas area grey background and screen shadows
     screen.pen = color.rgb(210, 210, 210)
@@ -60,7 +61,7 @@ def draw_dial(angle, pos):
     radius = 16
 
     # calculate an offset to fake perspective on the dials
-    offset = (80 - pos[0]) / 35
+    offset = ((screen.width / 2) - pos[0]) / 35
 
     # draw the dial shadow
     screen.pen = color.rgb(0, 0, 0, 40)

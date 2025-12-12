@@ -7,6 +7,7 @@ os.chdir("/system/apps/sketchysketch")
 from badgeware import run
 import ui
 
+mode(HIRES)
 
 canvas = image(ui.canvas_area[2], ui.canvas_area[3])
 cursor = (ui.canvas_area[2] / 2, ui.canvas_area[3] / 2)
@@ -21,14 +22,15 @@ def update_cursor():
 
     # update the cursor position based on user input and shift the dial animation
     if not last_cursor_move or (io.ticks - last_cursor_move) > 20:
+        last_cursor = cursor
         if io.BUTTON_A in io.held:
-            cursor = (cursor[0] - 1, cursor[1])
+            cursor = (cursor[0] - 4, cursor[1])
         if io.BUTTON_C in io.held:
-            cursor = (cursor[0] + 1, cursor[1])
+            cursor = (cursor[0] + 4, cursor[1])
         if io.BUTTON_UP in io.held:
-            cursor = (cursor[0], cursor[1] - 1)
+            cursor = (cursor[0], cursor[1] - 4)
         if io.BUTTON_DOWN in io.held:
-            cursor = (cursor[0], cursor[1] + 1)
+            cursor = (cursor[0], cursor[1] + 4)
         last_cursor_move = io.ticks
 
     # clamp cursor to canvas bounds
@@ -45,7 +47,10 @@ def update_cursor():
     if not last_cursor or int(last_cursor[0]) != int(cursor[0]) or int(last_cursor[1]) != int(cursor[1]):
         # draw to the canvas at the cursor position
         canvas.pen = color.rgb(105, 105, 105)
-        canvas.shape(shape.rectangle(int(cursor[0]), int(cursor[1]), 1, 1))
+        # draw a small circle to clean up the joins between the lines
+        canvas.shape(shape.circle(point(int(last_cursor[0]), int(last_cursor[1])), 0.5))
+        # draw the line
+        canvas.shape(shape.line(int(last_cursor[0]), int(last_cursor[1]), int(cursor[0]), int(cursor[1]), 1))
     last_cursor = cursor
 
 
@@ -58,8 +63,8 @@ def update():
     screen.blit(canvas, point(ui.canvas_area[0], ui.canvas_area[1]))
     ui.draw_cursor(cursor)
 
-    ui.draw_dial(left_dial_angle, (5, 115))
-    ui.draw_dial(right_dial_angle, (155, 115))
+    ui.draw_dial(left_dial_angle, (5, screen.height - 5))
+    ui.draw_dial(right_dial_angle, (screen.width - 5, screen.height - 5))
 
 
 if __name__ == "__main__":
