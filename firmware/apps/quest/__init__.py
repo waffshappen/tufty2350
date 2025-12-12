@@ -94,10 +94,10 @@ def update():
       width *= (zoom / 10)
       height *= (zoom / 10)
       splash.alpha = int(alpha * 255)
-      screen.scale_blit(splash, 80 - width / 2, 60 - height / 2, width, height)
+      screen.blit(splash, rect(80 - width / 2, 60 - height / 2, width, height))
     else:
       splash.alpha = 255
-      screen.blit(splash, 0, 0)
+      screen.blit(splash, point(0, 0))
 
       label = _last_task_completed.name
       message = "Location Unlocked!"

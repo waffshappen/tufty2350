@@ -21,7 +21,7 @@ tile_colors = [
 ]
 
 def draw_status(complete):
-  screen.blit(mona, 0, 72)
+  screen.blit(mona, point(0, 72))
   screen.font = small_font
   screen.pen = color.rgb(255, 255, 255)
   screen.text("mona's quest", 65, 0)

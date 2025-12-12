@@ -161,17 +161,17 @@ def draw_background():
     for i in range(3):
         # draw the distance background
         bo = ((-background_offset / 8) % background.width) - screen.width
-        screen.blit(background, bo + (background.width * i),
-                    115 - background.height)
+        screen.blit(background, point(bo + (background.width * i),
+                    115 - background.height))
 
         # draw the cloud background
         bo = ((-background_offset / 8) % (cloud.width * 2)) - screen.width
-        screen.blit(cloud, bo + (cloud.width * 2 * i), 20)
+        screen.blit(cloud, point(bo + (cloud.width * 2 * i), 20))
 
     for i in range(3):
         # draw the grass layer
         bo = ((-background_offset / 4) % (grass.width)) - screen.width
-        screen.blit(grass, bo + (grass.width * i), 120 - grass.height)
+        screen.blit(grass, point(bo + (grass.width * i), 120 - grass.height))
 
 
 # a couple of helper functions for formatting text

@@ -80,11 +80,11 @@ class Pet:
     # draw pet
     alpha = 150 if self._mood == "dead" else 255
     image.alpha = alpha
-    screen.scale_blit(image, x, y, width, height)
+    screen.blit(image, rect(x, y, width, height))
 
     # draw pets reflection
     image.alpha = int(alpha * 0.2)
-    screen.scale_blit(image, x, self._position[1] + (floating / 2) + 1, width, -20)
+    screen.blit(image, rect(x, self._position[1] + (floating / 2) + 1, width, -20))
     image.alpha = 255
 
   # set a new target position for pet to move to

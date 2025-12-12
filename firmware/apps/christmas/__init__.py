@@ -258,7 +258,7 @@ def update():
             screen.pen = color.rgb(255, 255, 255, 175)
             screen.shape(shape.rounded_rectangle(15, 25, screen.width - 30, screen.height - 50, 5).stroke(2))
 
-            screen.scale_blit(ornament, 5, screen.height - 40, 32, 32)
+            screen.blit(ornament, rect(5, screen.height - 40, 32, 32))
 
             screen.pen = color.rgb(*STAR_YELLOW)
             star = shape.star(0, 0, 5, 9, 16)

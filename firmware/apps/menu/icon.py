@@ -125,10 +125,12 @@ class Icon:
         # draw the icon sprite
         if sprite_width > 0:
             self.icon.alpha = 255 if self.active else 100
-            screen.scale_blit(
+            screen.blit(
                 self.icon,
-                self.pos[0] - sprite_offset - 1,
-                self.pos[1] - 13,
-                sprite_width,
-                24,
+                rect(
+                    self.pos[0] - sprite_offset - 1,
+                    self.pos[1] - 13,
+                    sprite_width,
+                    24
+                )
             )

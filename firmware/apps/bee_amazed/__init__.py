@@ -248,7 +248,7 @@ class MazeBuilder:
                 else:
                     sprite = (1, path)
 
-                screen.scale_blit(hedge.sprite(*sprite), px, py, wall_separation, wall_separation)
+                screen.blit(hedge.sprite(*sprite), rect(px, py, wall_separation, wall_separation))
 
 
 class Player(object):
@@ -297,9 +297,9 @@ class Player(object):
     def draw(self):
         image = self.current_animation.frame(round(io.ticks / 100))
 
-        screen.scale_blit(image, self.x * wall_separation + offset_x,
+        screen.blit(image, rect(self.x * wall_separation + offset_x,
                           self.y * wall_separation + offset_y,
-                          wall_size, wall_size)
+                          wall_size, wall_size))
 
 
 def build_maze():
@@ -332,15 +332,15 @@ flower = image.load("assets/flower.png")
 
 def draw_maze():
     # Clear the screen to the background colour
-    screen.blit(BACKGROUND, 0, 0)
+    screen.blit(BACKGROUND, point(0, 0))
 
     # Draw the maze walls
     builder.draw()
 
     # Draw the goal location flower
-    screen.scale_blit(flower, goal.x * wall_separation + offset_x,
+    screen.blit(flower, rect(goal.x * wall_separation + offset_x,
                       goal.y * wall_separation + offset_y,
-                      wall_size, wall_size)
+                      wall_size, wall_size))
 
     # Draw the player
     player.draw()
@@ -363,8 +363,8 @@ def intro():
 
     image = animations["down"].frame(round(io.ticks / 100))
 
-    screen.blit(BACKGROUND, 0, 0)
-    screen.scale_blit(image, (screen.width / 2) - 16, CY - 50, 32, 32)
+    screen.blit(BACKGROUND, point(0, 0))
+    screen.blit(image, rect((screen.width / 2) - 16, CY - 50, 32, 32))
 
     # draw title
     screen.font = large_font

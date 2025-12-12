@@ -74,12 +74,12 @@ def draw_thumbnails():
             screen.shape(shape.rectangle(
                 pos[0] - 1, pos[1] - 1, thumbnail_image.width + 2, thumbnail_image.height + 2))
 
-        screen.blit(thumbnail_image, *pos)
+        screen.blit(thumbnail_image, point(*pos))
 
     # draw a jumping mona
     mona_off = abs(((thumbnail_scroll - int(thumbnail_scroll)) * math.pi))
     mona_y = math.sin(mona_off) * 20
-    screen.scale_blit(mona.frame(io.ticks / 100), 130, 68 - mona_y, -24, 24)
+    screen.blit(mona.frame(io.ticks / 100), rect(130, 68 - mona_y, -24, 24))
 
 
 # start up with the first image in the gallery
@@ -114,7 +114,7 @@ def update():
         ui_hidden = True
 
     # draw the currently selected image
-    screen.blit(image, 0, 0)
+    screen.blit(image, point(0, 0))
 
     # smooth scroll towards the newly selected image
     if thumbnail_scroll < index:

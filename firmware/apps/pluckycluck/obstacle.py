@@ -41,17 +41,17 @@ class Obstacle:
 
     def draw(self):
         # draw the top half off the obstacle
-        screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y - 72, 32, 32)
-        screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y - 48, 32, 32)
-        screen.scale_blit(sprites.sprite(1, 0), self.x,
-                          self.gap_y - 32, 32, 32)  # spikes, yikes!
+        screen.blit(sprites.sprite(0, 0),
+                    rect(self.x, self.gap_y - 72, 32, 32))
+        screen.blit(sprites.sprite(0, 0),
+                    rect(self.x, self.gap_y - 48, 32, 32))
+        screen.blit(sprites.sprite(1, 0),
+                    rect(self.x, self.gap_y - 32, 32, 32))  # spikes, yikes!
 
         # draw the bottom half off the obstacle
-        screen.scale_blit(sprites.sprite(1, 0), self.x,
-                          self.gap_y + self.gap_height, 32, -32)  # spikes, yikes!
-        screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y + self.gap_height + 32, 32, -32)
-        screen.scale_blit(sprites.sprite(0, 0), self.x,
-                          self.gap_y + self.gap_height + 48, 32, -32)
+        screen.blit(sprites.sprite(1, 0),
+                    rect(self.x, self.gap_y + self.gap_height, 32, -32))  # spikes, yikes!
+        screen.blit(sprites.sprite(0, 0),
+                    rect(self.x, self.gap_y + self.gap_height + 32, 32, -32))
+        screen.blit(sprites.sprite(0, 0),
+                    rect(self.x, self.gap_y + self.gap_height + 48, 32, -32))

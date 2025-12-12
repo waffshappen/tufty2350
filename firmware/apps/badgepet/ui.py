@@ -32,7 +32,7 @@ outline_brush_bold = color.rgb(20, 30, 40, 200)
 # draw the background scenery
 def background(pet):
 
-    screen.blit(background_image, 0, 0)
+    screen.blit(background_image, point(0, 0))
 
 
 # draw the title banner
@@ -56,7 +56,7 @@ def draw_button(x, y, label, active):
 
     # draw the button arrow
     arrows.sprite(2, 0).alpha = 255 if active else 150
-    screen.blit(arrows.sprite(2, 0), x + (width / 2) - 4, y + bounce + 10)
+    screen.blit(arrows.sprite(2, 0), point(x + (width / 2) - 4, y + bounce + 10))
 
 
 # draw a statistics bar with icon and fill level
@@ -84,7 +84,7 @@ def draw_bar(name, x, y, amount):
     screen.pen = color.rgb(210, 230, 250, 50)
     screen.shape(shape.rounded_rectangle(x + 15, y + 3, fill_width - 2, 1, 1))
 
-    screen.blit(stats_icons[name], x, y)
+    screen.blit(stats_icons[name], point(x, y))
 
 
 def center_text(text, y, sx=0, ex=160):

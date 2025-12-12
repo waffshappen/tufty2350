@@ -55,7 +55,7 @@ def update():
 
     ui.draw_background()
 
-    screen.blit(canvas, ui.canvas_area[0], ui.canvas_area[1])
+    screen.blit(canvas, point(ui.canvas_area[0], ui.canvas_area[1]))
     ui.draw_cursor(cursor)
 
     ui.draw_dial(left_dial_angle, (5, 115))
