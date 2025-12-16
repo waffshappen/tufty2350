@@ -166,13 +166,18 @@ def update_time(region, timezone):
     return True
 
 
+def _is_valid_details():
+    return all([WIFI_SSID, WIFI_PASSWORD, REGION]) and isinstance(TIMEZONE, int)
+
+
 def get_connection_details():
     # Get WiFi details from secrets.py.
 
     global WIFI_PASSWORD, WIFI_SSID, REGION, TIMEZONE
 
-    if WIFI_PASSWORD is not None and WIFI_SSID is not None and REGION is not None and TIMEZONE is not None:
+    if _is_valid_details():
         return True
+
     try:
         sys.path.insert(0, "/")
         from secrets import WIFI_PASSWORD, WIFI_SSID, REGION, TIMEZONE
@@ -182,22 +187,9 @@ def get_connection_details():
         WIFI_SSID = None
         REGION = None
         TIMEZONE = None
-
-    if not WIFI_PASSWORD:
         return False
 
-    if not WIFI_SSID:
-        return False
-
-    if not REGION:
-        return False
-
-    # This check is different from the others because TIMEZONE is an
-    # integer that can be zero, so we have to specifically check for null.
-    if TIMEZONE is None:
-        return False
-
-    return True
+    return _is_valid_details()
 
 
 def wlan_start():
