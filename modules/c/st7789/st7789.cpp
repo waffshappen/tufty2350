@@ -3,8 +3,8 @@
 
 namespace pimoroni {
 
-  uint32_t framebuffer[320 * 240];
-  uint16_t backbuffer[160 * 240];
+  uint32_t __attribute__((section(".uninitialized_data"))) __attribute__ ((aligned (4))) framebuffer[320 * 240];
+  uint16_t __attribute__((section(".uninitialized_data"))) __attribute__ ((aligned (4))) backbuffer[240 * 2];
 
   enum MADCTL : uint8_t {
     ROW_ORDER   = 0b10000000,
@@ -32,7 +32,7 @@ namespace pimoroni {
     VDVS      = 0xC4,
     FRCTRL2   = 0xC6,
     PWCTRL1   = 0xD0,
-    GATESEL   = 0xD6, 
+    GATESEL   = 0xD6,
     PORCTRL   = 0xB2,
     GMCTRP1   = 0xE0,
     GMCTRN1   = 0xE1,
@@ -112,20 +112,19 @@ namespace pimoroni {
     command(reg::RASET,  4, (char *)raset);
     command(reg::MADCTL, 1, (char *)&madctl);
 
+    // Set up the screen for a display update
+    uint8_t cmd = reg::RAMWR;
+    gpio_put(dc, 0); // command mode
+    gpio_put(cs, 0);
+    write_blocking_parallel(&cmd, 1);
+    gpio_put(dc, 1); // data mode
+
+    // Temporarily reconfigure the DMA with no read increment so we can
+    // clock out just one zero (no need to memset) to clear the whole display.
     backbuffer[0] = 0;
-    write_buffer_async(); // Clear display to black
-
-    dma_channel_wait_for_finish_blocking(pd_st_dma);
-    while(!pio_sm_is_tx_fifo_empty(parallel_pio, parallel_pd_sm))
-      ;
-
-    // Reconfigure the pixel-double DMA to enable read increment
-    dma_channel_config pd_config = dma_channel_get_default_config(pd_st_dma);
-    channel_config_set_read_increment(&pd_config, true);
-    channel_config_set_transfer_data_size(&pd_config, DMA_SIZE_16);
-    channel_config_set_bswap(&pd_config, false);
-    channel_config_set_dreq(&pd_config, pio_get_dreq(parallel_pio, parallel_pd_sm, true));
-    dma_channel_configure(pd_st_dma, &pd_config, &parallel_pio->txf[parallel_pd_sm], NULL, 0, false);
+    configure_dma(false);
+    write_blocking_parallel((uint8_t *)backbuffer, fullres_width * fullres_height * sizeof(uint16_t)); // Clear display to black
+    configure_dma(true);
 
     command(reg::TEON, 1, "\x00");  // enable frame sync signal
     command(reg::STE, 2, "\x00\x00");
@@ -137,14 +136,33 @@ namespace pimoroni {
     return framebuffer;
   }
 
-  void ST7789::write_blocking_parallel(const uint8_t *src, size_t len) {
-    dma_channel_set_trans_count(st_dma, len, false);
-    dma_channel_set_read_addr(st_dma, src, true);
+  static inline volatile void pio_sm_block_until_stalled(PIO pio, uint sm) {
+    uint32_t sm_stall_mask = 1u << (sm + PIO_FDEBUG_TXSTALL_LSB);
+    pio->fdebug = sm_stall_mask;
+    while (!(pio->fdebug & sm_stall_mask))
+        ;
+  }
+
+  inline void ST7789::wait_for_dma(void) {
     dma_channel_wait_for_finish_blocking(st_dma);
 
     // Prevent a race between PIO and chip-select or data/command
-    while(!pio_sm_is_tx_fifo_empty(parallel_pio, parallel_sm))
-      ;
+    // What's up with pio_sm_is_exec_stalled?
+    pio_sm_block_until_stalled(parallel_pio, parallel_sm);
+  }
+
+  void ST7789::write_blocking_parallel(const uint8_t *src, size_t len) {
+    dma_channel_set_trans_count(st_dma, len, false);
+    dma_channel_set_read_addr(st_dma, src, true);
+
+    wait_for_dma();
+  }
+
+  void ST7789::write_async_parallel(const uint8_t *src, size_t len) {
+    wait_for_dma();
+
+    dma_channel_set_trans_count(st_dma, len, false);
+    dma_channel_set_read_addr(st_dma, src, true);
   }
 
   void ST7789::command(uint8_t command, size_t len, const char *data) {
@@ -161,75 +179,55 @@ namespace pimoroni {
     gpio_put(cs, 1);
   }
 
-  void ST7789::write_buffer_async() {
-    /*
-    // Block waiting for the vsync signal
-    gpio_put(dc, 0);
-    gpio_set_dir(dc, GPIO_IN);
-    gpio_set_pulls(dc, true, false);
-    while (gpio_get(dc)) {
-    }
-    */
-    gpio_set_pulls(dc, false, false);
-    gpio_set_dir(dc, GPIO_OUT);
-    uint8_t cmd = reg::RAMWR;
-    gpio_put(dc, 0); // command mode
-    gpio_put(cs, 0);
-    write_blocking_parallel(&cmd, 1);
-    gpio_put(dc, 1); // data mode
-    dma_channel_set_trans_count(pd_st_dma, 160 * 240, false);
-    dma_channel_set_read_addr(pd_st_dma, &backbuffer, true);
-  }
-
   void ST7789::update(bool fullres) {
-    dma_channel_wait_for_finish_blocking(pd_st_dma);
-    while(!pio_sm_is_tx_fifo_empty(parallel_pio, parallel_pd_sm))
-      ;
-
     // Determine clock divider
     const uint32_t sys_clk_hz = clock_get_hz(clk_sys);
 
     if (sys_clk_hz != startup_hz) {
       startup_hz = sys_clk_hz;
-      pio_sm_set_clkdiv(parallel_pio, parallel_pd_sm, fmax(1.0f, ceil(float(sys_clk_hz) / max_pio_clk)));
       pio_sm_set_clkdiv(parallel_pio, parallel_sm, fmax(1.0f, ceil(float(sys_clk_hz) / max_pio_clk)));
     }
 
+    uint8_t cmd = reg::RAMWR;
+    gpio_put(dc, 0); // command mode
+    gpio_put(cs, 0);
+    write_blocking_parallel(&cmd, 1);
+    gpio_put(dc, 1); // data mode
+
     if(fullres) {
-      gpio_set_pulls(dc, false, false);
-      gpio_set_dir(dc, GPIO_OUT);
-      uint8_t cmd = reg::RAMWR;
-      gpio_put(dc, 0); // command mode
-      gpio_put(cs, 0);
-      write_blocking_parallel(&cmd, 1);
-      gpio_put(dc, 1); // data mode
-      //uint8_t *src = (uint8_t *)framebuffer;
       for(int x = 0; x < fullres_width; x++) {
         for(int y = 0; y < fullres_height; y++) {
           uint8_t *src = (uint8_t *)(framebuffer + (y * fullres_width + x));
           uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
           backbuffer[y] = __builtin_bswap16(pixel);
         }
-        write_blocking_parallel((uint8_t *)backbuffer, fullres_height * 2);
+        // Transfer a single full res (full 240 pixel height) column
+        // In full-res we can "chase the beam" as it were, replacing pixels
+        // behind the outgoing DMA transfer.
+        write_async_parallel((uint8_t *)backbuffer, fullres_height * 2);
       }
     } else {
-      uint8_t *src = (uint8_t *)framebuffer;
-      //uint16_t *dst = (uint16_t *)backbuffer;
-      for(int y = 0; y < height; y++) {
-        for(int x = 0; x < width * 2; x += 2) {
-          //*(dst + height) = *dst = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
-          uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
-          backbuffer[x * height + y] = pixel;
-          backbuffer[x * height + y + height] = pixel;
-          //dst++;
-          src += 4;
+      // Increment this number every time you try to optimise this loop and
+      // get absolutely rekd by the compiler.
+      // Optimisation Tries: 1
+      for(int x = 0; x < width; x++) {
+        for(int y = 0; y < height; y++) {
+          uint8_t *src = (uint8_t *)(framebuffer + (y * width + x));
+          uint16_t pixel = __builtin_bswap16(((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3));
+          backbuffer[y * 2] = pixel;
+          backbuffer[y * 2 + 1] = pixel;
+          backbuffer[(y + height) * 2] = pixel;
+          backbuffer[(y + height) * 2 + 1] = pixel;
         }
-        // Skip the vertically pixel-doubled row we set above
-        //dst += width;
+        // Transfer two full res (full 240 pixel height) columns (for horizontal pixel double)
+        // In pixel-doubled we're preparing and transferring two full columns
+        // so we can't "chase the beam".
+        write_blocking_parallel((uint8_t *)backbuffer, fullres_height * 2 * 2);
       }
-
-      write_buffer_async();
     }
+
+    wait_for_dma();
+    gpio_put(cs, 1);
   }
 
   void ST7789::set_backlight(uint8_t brightness) {
@@ -238,5 +236,14 @@ namespace pimoroni {
     float gamma = 2.8;
     uint16_t value = (uint16_t)(pow((float)(brightness) / 255.0f, gamma) * 65535.0f + 0.5f);
     pwm_set_gpio_level(bl, value);
+  }
+
+  void ST7789::configure_dma(bool enable_read_increment) {
+    dma_channel_config config = dma_channel_get_default_config(st_dma);
+    channel_config_set_read_increment(&config, enable_read_increment);
+    channel_config_set_transfer_data_size(&config, DMA_SIZE_8);
+    channel_config_set_bswap(&config, false);
+    channel_config_set_dreq(&config, pio_get_dreq(parallel_pio, parallel_sm, true));
+    dma_channel_configure(st_dma, &config, &parallel_pio->txf[parallel_sm], NULL, 0, false);
   }
 }
