@@ -45,7 +45,7 @@ def stretch_text(text, x, y, distance, current_brush):
 def user_message(caption, line1, line2=None, line3=None, line4=None, line5=None, line6=None):
     # A simple message screen with a heading and up to six lines of text.
 
-    screen.pen = black
+    screen.pen = brush.pattern(color.rgb(0, 0, 0), color.rgb(20, 20, 20), 20)
     screen.clear()
     screen.font = large_font
     screen.pen = white

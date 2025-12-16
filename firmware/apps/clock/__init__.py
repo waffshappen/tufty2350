@@ -683,7 +683,7 @@ def intro_screen():
     # The intro screen only shows on the first run of Clock.
     # It just shows some icons to demonstrate what each button does.
 
-    screen.pen = color.rgb(0, 0, 0)
+    screen.pen = brush.pattern(color.rgb(0, 0, 0), color.rgb(20, 20, 20), 20)
     screen.clear()
 
     screen.pen = color.rgb(255, 255, 255)
