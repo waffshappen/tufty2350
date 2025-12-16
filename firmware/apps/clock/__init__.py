@@ -146,8 +146,12 @@ def update_time(region, timezone):
     # Set the time with ntptime and pass it to the daylight saving calculator.
     # Pass the result to the unit's RTC.
 
-    ntptime.settime()
-    time.sleep(2)
+    # handle time out during ntp comms
+    try:
+        ntptime.settime()
+        time.sleep(2)
+    except OSError:
+        return False
 
     timezone_minutes = timezone * 60
 
@@ -778,8 +782,10 @@ def update():
         display_time()
 
     elif clock_state == ClockState.UpdateTime:
-        update_time(REGION, TIMEZONE)
-        clock_state = ClockState.Running
+        if update_time(REGION, TIMEZONE):
+            clock_state = ClockState.Running
+        else:
+            user_message("Error!", "Unable to get time", "from NTP server.")
 
     elif clock_state == ClockState.ConnectWiFi:
         if get_connection_details():
