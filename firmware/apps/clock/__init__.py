@@ -24,10 +24,9 @@ class DisplayType:
 
 class ClockState:
     Running = 0
-    GetSecrets = 1
-    ConnectWiFi = 2
-    UpdateTime = 3
-    FirstRun = 4
+    ConnectWiFi = 1
+    UpdateTime = 2
+    FirstRun = 3
 
 
 WIFI_TIMEOUT = 60
@@ -772,7 +771,7 @@ def update():
     # If the year in the RTC is 2021 or earlier, we need to sync so it has the same effect as pressing B.
     elif io.BUTTON_B in io.pressed or time.gmtime()[0] <= 2021 and clock_state == ClockState.Running:
         user_message("Updating...", "Updating time", "from NTP server...", "Getting WiFi details...")
-        clock_state = ClockState.GetSecrets
+        clock_state = ClockState.ConnectWiFi
 
     # So here we just decide what to do based on the clock_state global.
     # Running is normal operation, but if B was detected as pressed above,
@@ -791,16 +790,12 @@ def update():
         clock_state = ClockState.Running
 
     elif clock_state == ClockState.ConnectWiFi:
-        if wlan_start():
-            user_message("Updating...", "Updating time", "from NTP server...", "Getting WiFi details...", "Connecting WiFi...", "Fetching time...")
-            clock_state = ClockState.UpdateTime
-        else:
-            bullet_list("Connection Failed!", """Could not connect\nto the WiFi network.\n:-(""", """Edit 'secrets.py' to\nset WiFi details and\nyour local region.""", """Reload to see your\ncorrect local time!""")
-
-    elif clock_state == ClockState.GetSecrets:
         if get_connection_details():
-            user_message("Updating...", "Updating time", "from NTP server...", "Getting WiFi details...", "Connecting WiFi...")
-            clock_state = ClockState.ConnectWiFi
+            if wlan_start():
+                user_message("Updating...", "Updating time", "from NTP server...", "Getting WiFi details...", "Connecting WiFi...", "Fetching time...")
+                clock_state = ClockState.UpdateTime
+            else:
+                bullet_list("Connection Failed!", """Could not connect\nto the WiFi network.\n:-(""", """Edit 'secrets.py' to\nset WiFi details and\nyour local region.""", """Reload to see your\ncorrect local time!""")
         else:
             bullet_list("Missing Details!", """Put your badge into\ndisk mode (tap\nRESET twice)""", """Edit 'secrets.py' to\nset WiFi details and\nyour local region.""", """Reload to see your\ncorrect local time!""")
 
