@@ -42,48 +42,46 @@ def stretch_text(text, x, y, distance, current_brush):
     return height
 
 
-def user_message(caption, line1, line2=None, line3=None, line4=None, line5=None, line6=None):
+def user_message(header, lines):
     # A simple message screen with a heading and up to six lines of text.
+
+    if not isinstance(lines, list):
+        raise TypeError("lines must be provided in a list.")
 
     screen.pen = brush.pattern(color.rgb(0, 0, 0), color.rgb(20, 20, 20), 20)
     screen.clear()
     screen.font = large_font
     screen.pen = white
-    center_text(caption, 5)
+    center_text(header, 5)
 
     screen.font = small_font
-    center_text(line1, 20)
+    line_spacing = 8
+    ty = 20
 
-    if line2:
-        center_text(line2, 28)
-    if line3:
-        center_text(line3, 36)
-    if line4:
-        center_text(line4, 44)
-    if line5:
-        center_text(line5, 52)
-    if line6:
-        center_text(line6, 60)
+    for line in lines:
+        center_text(line, ty)
+        ty += line_spacing
 
 
-def bullet_list(caption, bullet1, bullet2=None, bullet3=None):
+def bullet_list(header, bullet_points):
     # A simple message screen with three bullet points.
 
-    screen.pen = black
+    if not isinstance(bullet_points, list):
+        raise TypeError("bullet points must be provided in a list.")
+
+    screen.pen = brush.pattern(color.rgb(0, 0, 0), color.rgb(20, 20, 20), 20)
     screen.clear()
     screen.font = large_font
     screen.pen = white
-    center_text(caption, 5)
+    center_text(header, 5)
 
-    screen.text("1:", 10, 23)
-    if bullet2:
-        screen.text("2:", 10, 55)
-    if bullet3:
-        screen.text("3:", 10, 87)
+    ty = 23
+    line_spacing = 30
 
-    screen.font = small_font
-    wrap_text(bullet1, 30, 24)
-    if bullet2:
-        wrap_text(bullet2, 30, 56)
-    if bullet3:
-        wrap_text(bullet3, 30, 88)
+    for i, b in enumerate(bullet_points):
+        num = i + 1
+        screen.font = large_font
+        screen.text(f"{num}:", 10, ty)
+        screen.font = small_font
+        wrap_text(b, 30, ty + 1)
+        ty += line_spacing
