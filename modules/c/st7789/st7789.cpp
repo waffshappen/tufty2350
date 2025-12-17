@@ -159,7 +159,6 @@ namespace pimoroni {
   void ST7789::write_blocking(const uint8_t *src, size_t len) {
     dma_channel_set_trans_count(st_dma, len, false);
     dma_channel_set_read_addr(st_dma, src, true);
-
     wait_for_dma();
   }
 
@@ -169,6 +168,8 @@ namespace pimoroni {
   }
 
   void ST7789::command(uint8_t command, size_t len, const char *data) {
+    wait_for_dma();
+
     gpio_put(dc, 0); // command mode
 
     gpio_put(cs, 0);
@@ -191,6 +192,8 @@ namespace pimoroni {
       pio_sm_set_clkdiv(parallel_pio, parallel_sm, fmax(1.0f, ceil(float(sys_clk_hz) / max_pio_clk)));
     }
 
+    wait_for_dma();
+
     uint8_t cmd = reg::RAMWR;
     gpio_put(dc, 0); // command mode
     gpio_put(cs, 0);
@@ -207,9 +210,8 @@ namespace pimoroni {
     if(fullres) {
       for(int x = 0; x < fullres_width; x++) {
         for(int y = 0; y < fullres_height; y++) {
-          uint8_t *src = (uint8_t *)(framebuffer + (y * fullres_width + x));
-          uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
-          buf_a[y] = __builtin_bswap16(pixel);
+          uint32_t src = framebuffer[y * fullres_width + x];
+          buf_a[y] = __builtin_bswap16(((src & 0xf8) << 8) | ((src & 0xfc00) >> 5) | ((src & 0xf80000) >> 19));
         }
         // Transfer a single full res (full 240 pixel height) column
         // In full-res we can "chase the beam" as it were, replacing pixels
@@ -221,8 +223,8 @@ namespace pimoroni {
     } else {
       for(int x = 0; x < width; x++) {
         for(int y = 0; y < height; y++) {
-          uint8_t *src = (uint8_t *)(framebuffer + (y * width + x));
-          uint16_t pixel = __builtin_bswap16(((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3));
+          uint32_t src = framebuffer[y * width + x];
+          uint16_t pixel = __builtin_bswap16(((src & 0xf8) << 8) | ((src & 0xfc00) >> 5) | ((src & 0xf80000) >> 19));
           buf_a[y * 2] = pixel;
           buf_a[y * 2 + 1] = pixel;
           // It's slightly faster to prepare to rows, rather than prepare
@@ -236,8 +238,9 @@ namespace pimoroni {
       }
     }
 
-    wait_for_dma();
-    gpio_put(cs, 1);
+    // Yeet the last column into the abyss and save a little time
+    // wait_for_dma();
+    // gpio_put(cs, 1);
   }
 
   void ST7789::set_backlight(uint8_t brightness) {
