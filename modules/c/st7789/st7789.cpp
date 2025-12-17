@@ -4,7 +4,12 @@
 namespace pimoroni {
 
   uint32_t __attribute__((section(".uninitialized_data"))) __attribute__ ((aligned (4))) framebuffer[320 * 240];
-  uint16_t __attribute__((section(".uninitialized_data"))) __attribute__ ((aligned (4))) backbuffer[240 * 2];
+  uint16_t __attribute__((section(".uninitialized_data"))) __attribute__ ((aligned (4))) linebuffer[240 * 4];
+
+  // If we configure MicroPython's main.c to skip the first 320 * 240 * sizeof(uint32_t)
+  // bytes we can steal this as a backbuffer.
+  // auto backbuffer = new((uintptr_t *)XIP_PSRAM_CACHED) uint32_t[320 * 240];
+  // auto backbuffer_nocache = new((uintptr_t *)XIP_PSRAM_NOCACHE) uint32_t[320 * 240];
 
   enum MADCTL : uint8_t {
     ROW_ORDER   = 0b10000000,
@@ -116,14 +121,14 @@ namespace pimoroni {
     uint8_t cmd = reg::RAMWR;
     gpio_put(dc, 0); // command mode
     gpio_put(cs, 0);
-    write_blocking_parallel(&cmd, 1);
+    write_blocking(&cmd, 1);
     gpio_put(dc, 1); // data mode
 
     // Temporarily reconfigure the DMA with no read increment so we can
     // clock out just one zero (no need to memset) to clear the whole display.
-    backbuffer[0] = 0;
+    linebuffer[0] = 0;
     configure_dma(false);
-    write_blocking_parallel((uint8_t *)backbuffer, fullres_width * fullres_height * sizeof(uint16_t)); // Clear display to black
+    write_blocking((uint8_t *)linebuffer, fullres_width * fullres_height * sizeof(uint16_t)); // Clear display to black
     configure_dma(true);
 
     command(reg::TEON, 1, "\x00");  // enable frame sync signal
@@ -151,16 +156,14 @@ namespace pimoroni {
     pio_sm_block_until_stalled(parallel_pio, parallel_sm);
   }
 
-  void ST7789::write_blocking_parallel(const uint8_t *src, size_t len) {
+  void ST7789::write_blocking(const uint8_t *src, size_t len) {
     dma_channel_set_trans_count(st_dma, len, false);
     dma_channel_set_read_addr(st_dma, src, true);
 
     wait_for_dma();
   }
 
-  void ST7789::write_async_parallel(const uint8_t *src, size_t len) {
-    wait_for_dma();
-
+  void ST7789::start_dma(const uint8_t *src, size_t len) {
     dma_channel_set_trans_count(st_dma, len, false);
     dma_channel_set_read_addr(st_dma, src, true);
   }
@@ -170,10 +173,10 @@ namespace pimoroni {
 
     gpio_put(cs, 0);
 
-    write_blocking_parallel(&command, 1);
+    write_blocking(&command, 1);
     if(data) {
       gpio_put(dc, 1); // data mode
-      write_blocking_parallel((const uint8_t*)data, len);
+      write_blocking((const uint8_t*)data, len);
     }
 
     gpio_put(cs, 1);
@@ -191,38 +194,45 @@ namespace pimoroni {
     uint8_t cmd = reg::RAMWR;
     gpio_put(dc, 0); // command mode
     gpio_put(cs, 0);
-    write_blocking_parallel(&cmd, 1);
+    write_blocking(&cmd, 1);
     gpio_put(dc, 1); // data mode
 
+    // Take an "a" and a "b" pointer into the linebuffer, we will swap between
+    // these, converting pixels into one while the other is DMA'd to the screen.
+    uint16_t *buf_a = linebuffer;
+    uint16_t *buf_b = linebuffer + 240 * 2;
+
+    // The copy from framebuffer to linebuffer also serves to rotate the image
+    // 90 degrees to match the scan orientation and prevent diagonal tearing.
     if(fullres) {
       for(int x = 0; x < fullres_width; x++) {
         for(int y = 0; y < fullres_height; y++) {
           uint8_t *src = (uint8_t *)(framebuffer + (y * fullres_width + x));
           uint16_t pixel = ((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3);
-          backbuffer[y] = __builtin_bswap16(pixel);
+          buf_a[y] = __builtin_bswap16(pixel);
         }
         // Transfer a single full res (full 240 pixel height) column
         // In full-res we can "chase the beam" as it were, replacing pixels
         // behind the outgoing DMA transfer.
-        write_async_parallel((uint8_t *)backbuffer, fullres_height * 2);
+        wait_for_dma();
+        start_dma((uint8_t *)buf_a, fullres_height * 2);
+        std::swap(buf_a, buf_b);
       }
     } else {
-      // Increment this number every time you try to optimise this loop and
-      // get absolutely rekd by the compiler.
-      // Optimisation Tries: 1
       for(int x = 0; x < width; x++) {
         for(int y = 0; y < height; y++) {
           uint8_t *src = (uint8_t *)(framebuffer + (y * width + x));
           uint16_t pixel = __builtin_bswap16(((src[0] & 0b11111000) << 8) | ((src[1] & 0b11111100) << 3) | (src[2] >> 3));
-          backbuffer[y * 2] = pixel;
-          backbuffer[y * 2 + 1] = pixel;
-          backbuffer[(y + height) * 2] = pixel;
-          backbuffer[(y + height) * 2 + 1] = pixel;
+          buf_a[y * 2] = pixel;
+          buf_a[y * 2 + 1] = pixel;
+          // It's slightly faster to prepare to rows, rather than prepare
+          // a single row and copy it twice.
+          buf_a[(height + y) * 2] = pixel;
+          buf_a[(height + y) * 2 + 1] = pixel;
         }
-        // Transfer two full res (full 240 pixel height) columns (for horizontal pixel double)
-        // In pixel-doubled we're preparing and transferring two full columns
-        // so we can't "chase the beam".
-        write_blocking_parallel((uint8_t *)backbuffer, fullres_height * 2 * 2);
+        wait_for_dma();
+        start_dma((uint8_t *)buf_a, fullres_height * 2 * 2);
+        std::swap(buf_a, buf_b);
       }
     }
 

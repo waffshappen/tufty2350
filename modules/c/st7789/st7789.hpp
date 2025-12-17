@@ -12,12 +12,14 @@
 #include "hardware/clocks.h"
 #include "pico/stdlib.h"
 
-
 #ifndef NO_QSTR
 #include "st7789_parallel.pio.h"
 #endif
 
 #include <algorithm>
+
+#define XIP_PSRAM_CACHED  _u(0x11000000)
+#define XIP_PSRAM_NOCACHE _u(0x15000000)
 
 
 namespace pimoroni {
@@ -113,8 +115,8 @@ namespace pimoroni {
     void init();
     void configure_dma(bool enable_read_increment = true);
     inline void wait_for_dma(void);
-    void write_blocking_parallel(const uint8_t *src, size_t len);
-    void write_async_parallel(const uint8_t *src, size_t len);
+    void write_blocking(const uint8_t *src, size_t len);
+    void start_dma(const uint8_t *src, size_t len);
   };
 
 }
