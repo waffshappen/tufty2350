@@ -127,14 +127,12 @@ def clamp(v, vmin, vmax):
 def rnd(v1, v2=None):
     if v2:
       return random.randint(v1, v2)
-    else:
-      return random.randint(0, v1)
+    return random.randint(0, v1)
 
 def frnd(v1, v2=None):
     if v2:
       return random.uniform(v1, v2)
-    else:
-      return random.uniform(0, v1)
+    return random.uniform(0, v1)
 
 
 def file_exists(path):
@@ -373,7 +371,7 @@ def mode(mode, force=False):
     font = getattr(getattr(builtins, "screen", None), "font", None)
     brush = getattr(getattr(builtins, "screen", None), "pen", None)
     resolution = (320, 240) if mode == HIRES else (160, 120)
-    setattr(builtins, "screen", image(*resolution, memoryview(display)))
+    builtins.screen = image(*resolution, memoryview(display))
     screen.font = font if font is not None else DEFAULT_FONT
     screen.pen = brush if brush is not None else BG
     picovector.default_target = screen
@@ -539,7 +537,7 @@ for k in ("mode", "HIRES", "LORES", "SpriteSheet", "load_font", "rom_font"):
 
 
 # Finally, build in badgeware as "bw" for less frequently used things
-setattr(builtins, "bw", sys.modules["badgeware"])
+builtins.bw = sys.modules["badgeware"]
 
 
 if __name__ == "__main__":

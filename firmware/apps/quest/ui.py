@@ -39,8 +39,8 @@ def draw_tiles(complete):
   pos = (70, 31)
   screen.font = large_font
 
-  for y in range(0, 3):
-    for x in range(0, 3):
+  for y in range(3):
+    for x in range(3):
       # animate the inactive tile borders
       pulse = (math.sin(io.ticks / 250 + (x + y)) / 2) + 0.5
       pulse = 0.8 + (pulse / 2)

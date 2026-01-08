@@ -5,7 +5,6 @@ import os
 from badgeware import run
 import machine
 import gc
-import builtins
 # import powman
 
 SKIP_CINEMATIC = True   # powman.get_wake_reason() == powman.WAKE_WATCHDOG
