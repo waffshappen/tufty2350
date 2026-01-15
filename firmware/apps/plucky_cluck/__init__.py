@@ -1,8 +1,8 @@
 import sys
 import os
 
-sys.path.insert(0, "/system/apps/pluckycluck")
-os.chdir("/system/apps/pluckycluck")
+sys.path.insert(0, "/system/apps/plucky_cluck")
+os.chdir("/system/apps/plucky_cluck")
 
 from badgeware import run, State
 from chicken import Chicken
@@ -11,8 +11,8 @@ from obstacle import Obstacle
 background = image.load("assets/background.png")
 grass = image.load("assets/grass.png")
 cloud = image.load("assets/cloud.png")
-large_font = pixel_font.load("/system/assets/fonts/ziplock.ppf")
-small_font = pixel_font.load("/system/assets/fonts/nope.ppf")
+large_font = rom_font.ziplock
+small_font = rom_font.nope
 chicken = None
 
 score = {
@@ -161,17 +161,17 @@ def draw_background():
     for i in range(3):
         # draw the distance background
         bo = ((-background_offset / 8) % background.width) - screen.width
-        screen.blit(background, point(bo + (background.width * i),
+        screen.blit(background, vec2(bo + (background.width * i),
                     115 - background.height))
 
         # draw the cloud background
         bo = ((-background_offset / 8) % (cloud.width * 2)) - screen.width
-        screen.blit(cloud, point(bo + (cloud.width * 2 * i), 20))
+        screen.blit(cloud, vec2(bo + (cloud.width * 2 * i), 20))
 
     for i in range(3):
         # draw the grass layer
         bo = ((-background_offset / 4) % (grass.width)) - screen.width
-        screen.blit(grass, point(bo + (grass.width * i), 120 - grass.height))
+        screen.blit(grass, vec2(bo + (grass.width * i), 120 - grass.height))
 
 
 # a couple of helper functions for formatting text

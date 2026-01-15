@@ -1,8 +1,13 @@
+APP_DIR = "/system/apps/sketchy_sketch"
+
 import sys
 import os
 
-sys.path.insert(0, "/system/apps/sketchsketch")
-os.chdir("/system/apps/sketchysketch")
+# Standalone bootstrap for finding app assets
+os.chdir(APP_DIR)
+
+# Standalone bootstrap for module imports
+sys.path.insert(0, APP_DIR)
 
 from badgeware import run
 import ui
@@ -48,7 +53,7 @@ def update_cursor():
         # draw to the canvas at the cursor position
         canvas.pen = color.rgb(105, 105, 105)
         # draw a small circle to clean up the joins between the lines
-        canvas.shape(shape.circle(point(int(last_cursor[0]), int(last_cursor[1])), 0.5))
+        canvas.shape(shape.circle(vec2(int(last_cursor[0]), int(last_cursor[1])), 0.5))
         # draw the line
         canvas.shape(shape.line(int(last_cursor[0]), int(last_cursor[1]), int(cursor[0]), int(cursor[1]), 1))
     last_cursor = cursor
@@ -60,7 +65,7 @@ def update():
 
     ui.draw_background()
 
-    screen.blit(canvas, point(ui.canvas_area[0], ui.canvas_area[1]))
+    screen.blit(canvas, vec2(ui.canvas_area[0], ui.canvas_area[1]))
     ui.draw_cursor(cursor)
 
     ui.draw_dial(left_dial_angle, (5, screen.height - 5))

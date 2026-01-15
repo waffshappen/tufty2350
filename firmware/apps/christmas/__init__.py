@@ -1,5 +1,5 @@
 
-# Your apps directory
+# Your app's directory
 APP_DIR = "/system/apps/christmas"
 
 import os

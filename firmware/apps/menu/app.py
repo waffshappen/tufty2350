@@ -1,4 +1,8 @@
+import os
 import math
+from badgeware import is_dir, file_exists
+
+import ui
 
 orange = color.rgb(246, 135, 4)
 blue = color.rgb(28, 181, 202)
@@ -10,23 +14,6 @@ purple = color.rgb(188, 96, 208)
 # bright icon colours
 bold = [orange, blue, red, green, yellow, purple]
 
-
-# --orange: #f68704;
-# --orange-rgb: 246, 135, 4;
-# --pale: #bac0ca;
-# --pale-rgb: 218, 216, 218;
-# --pink: #f97eb5;
-# --pink-rgb: 249, 126, 181;
-# --purple: #bc60d0;
-# --purple-rgb: 188, 96, 208;
-# --red: #e63c2e;
-# --red-rgb: 230, 60, 46;
-# --theme-font: "Roboto", "Helvetica", "Tahoma", "Arial", sans-serif;
-# --white: #ffffff;
-# --white-rgb: 255, 255, 255;
-# --yellow: #f6a704;
-# --yellow-rgb: 246, 167, 4;
-
 # create faded out variants for inactive icons
 fade = 1.8
 faded = [
@@ -36,19 +23,6 @@ faded = [
     color.rgb(9, 183, 117, 120),
     color.rgb(246, 167, 4, 120),
     color.rgb(188, 96, 208, 120),
-
-    # color.rgb(211, 250, 55, 100),
-    # color.rgb(48, 148, 255, 100),
-    # color.rgb(95, 237, 131, 100),
-    # color.rgb(225, 46, 251, 100),
-    # color.rgb(216, 189, 14, 100),
-    # color.rgb(255, 128, 210, 100),
-    # color.rgb(211 / fade, 250 / fade, 55 / fade, 100),
-    # color.rgb(48 / fade, 148 / fade, 255 / fade, 100),
-    # color.rgb(95 / fade, 237 / fade, 131 / fade, 100),
-    # color.rgb(225 / fade, 46 / fade, 251 / fade, 100),
-    # color.rgb(216 / fade, 189 / fade, 14 / fade, 100),
-    # color.rgb(255 / fade, 128 / fade, 210 / fade, 100),
 ]
 
 # icon shape
@@ -56,16 +30,16 @@ squircle = shape.squircle(0, 0, 20, 4)
 shade_brush = color.rgb(0, 0, 0, 50)
 
 
-class Icon:
-    active_icon = None
-
-    def __init__(self, pos, name, index, icon):
+class App:
+    def __init__(self, collection, name, path, icon):
         self.active = False
-        self.pos = pos
+        self.index = len(collection)
+        self.pos = vec2((self.index % 3) * 48 + 32, (math.floor((self.index % 6) / 3)) * 48 + 42)
         self.icon = icon
         self.name = name
-        self.index = index
+        self.path = path
         self.spin = False
+        collection.append(self)
 
     def activate(self, active):
         # if this icon wasn't already activated then flag it for the spin animation
@@ -73,8 +47,6 @@ class Icon:
             self.spin = True
             self.spin_start = io.ticks
         self.active = active
-        if active:
-            Icon.active_icon = self
 
     def draw(self):
         width = 1
@@ -101,7 +73,7 @@ class Icon:
                 self.spin = False
 
         # transform to the icon position
-        squircle.transform = mat3().translate(*self.pos).scale(width, 1)
+        squircle.transform = mat3().translate(self.pos.x, self.pos.y).scale(width, 1)
 
         # draw the icon shading
         screen.pen = shade_brush
@@ -111,9 +83,9 @@ class Icon:
         # draw the icon body
         squircle.transform = squircle.transform.scale(1, 1)
         if self.active:
-            screen.pen = bold[self.index]
+            screen.pen = bold[self.index % 6]
         else:
-            screen.pen = faded[self.index]
+            screen.pen = faded[self.index % 6]
         squircle.transform = squircle.transform.translate(-1, -1)
         screen.shape(squircle)
         squircle.transform = squircle.transform.translate(2, 2)
@@ -126,9 +98,70 @@ class Icon:
             screen.blit(
                 self.icon,
                 rect(
-                    self.pos[0] - sprite_offset - 1,
-                    self.pos[1] - 13,
+                    self.pos.x - sprite_offset - 1,
+                    self.pos.y - 13,
                     sprite_width,
                     24
                 )
             )
+
+
+class Apps:
+    def __init__(self, root):
+        self.apps = []
+        self.active_index = 0
+
+        def capitalize(word):
+            if len(word) <= 1:
+                return word
+            return word[0].upper() + word[1:]
+
+        for path in os.listdir(root):
+            name = " ".join([capitalize(word) for word in path.split("_")])
+
+            if is_dir(f"{root}/{path}"):
+                if file_exists(f"{root}/{path}/icon.png"):
+                    App(self.apps, name, path, image.load(f"{root}/{path}/icon.png"))
+
+    @property
+    def active(self):
+        return self.apps[self.active_index]
+
+    def activate(self, index):
+        self.active_index = index
+        for app in self.apps:
+            app.activate(app.index == index)
+
+    def draw_icons(self):
+        offset = (self.active_index // 6) * 6
+        for i, app in enumerate(self.apps[offset:offset + 6]):
+            app.draw()
+
+    def draw_label(self):
+        label = self.active.name
+        w, _ = screen.measure_text(label)
+        screen.pen = ui.phosphor
+        screen.shape(shape.rounded_rectangle(80 - (w / 2) - 4, 100, w + 8, 15, 4))
+        screen.pen = color.rgb(20, 40, 60)
+        screen.text(label, 80 - (w / 2), 101)
+
+    def draw_pagination(self, x=150, y=65):
+        pages = math.ceil(len(self.apps) / 6)
+        selected_page = self.active_index // 6
+        y -= (pages * 7) / 2
+
+        for page in range(pages):
+            offset = page * 6
+            pips = len(self.apps[offset:offset + 6])
+            for pip in range(pips):
+                if self.active_index - (page * 6) == pip:
+                    screen.pen = color.rgb(255, 255, 255, 200)
+                else:
+                    screen.pen = color.rgb(255, 255, 255, 100) if page == selected_page else color.rgb(255, 255, 255, 50)
+                screen.put(x + (pip % 3) * 2, y + (page * 7) + (pip // 3) * 2)
+
+    def __len__(self):
+        return len(self.apps)
+
+    def __getitem__(self, i):
+        return self.apps[i]

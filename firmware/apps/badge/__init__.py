@@ -163,7 +163,7 @@ def update():
         screen.pen = color.rgb(0, 0, 0)
         if not rear_view:
             screen.font = large_font
-            screen.blit(id_photo, point(CX - id_photo.width / 2, y + 10))
+            screen.blit(id_photo, vec2(CX - id_photo.width / 2, y + 10))
             center_text(id_name, photo_y)
             screen.font = small_font
             center_text(id_role, photo_y + 12)
@@ -172,7 +172,7 @@ def update():
             for account in id_socials.items():
                 screen.pen = color.rgb(100, 100, 100)
                 screen.shape(shape.rounded_rectangle(20, socials_y, 17, 17, 3))
-                screen.blit(account[1]["icon"], point(20, socials_y))
+                screen.blit(account[1]["icon"], vec2(20, socials_y))
                 shadow_text(account[1]["handle"], 40, socials_y)
                 socials_y += 21
 

@@ -310,7 +310,7 @@ class Widget:
 
             if self.draw:
                 self.draw(self.wx, self.wy, self.ww, self.wh)
-            screen.blit(win, point(self.wx + 4, self.wy + 5))
+            screen.blit(win, vec2(self.wx + 4, self.wy + 5))
 
             # draw the close button
             screen.shape(shape.rounded_rectangle(71, screen.height - 28, 18, 15, 3, 3, 0, 0))

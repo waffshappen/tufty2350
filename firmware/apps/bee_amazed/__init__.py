@@ -332,7 +332,7 @@ flower = image.load("assets/flower.png")
 
 def draw_maze():
     # Clear the screen to the background colour
-    screen.blit(BACKGROUND, point(0, 0))
+    screen.blit(BACKGROUND, vec2(0, 0))
 
     # Draw the maze walls
     builder.draw()
@@ -363,7 +363,7 @@ def intro():
 
     image = animations["down"].frame(round(io.ticks / 100))
 
-    screen.blit(BACKGROUND, point(0, 0))
+    screen.blit(BACKGROUND, vec2(0, 0))
     screen.blit(image, rect((screen.width / 2) - 16, CY - 50, 32, 32))
 
     # draw title

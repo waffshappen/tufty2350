@@ -95,10 +95,10 @@ class Chicken:
             # clamped velocity to the 0...7 sprites that represent her
             frame = int(frame * 2)
             sprite = alive.frame(int(frame))
-            screen.blit(sprite, point(self.pos[0], self.pos[1]))
+            screen.blit(sprite, vec2(self.pos[0], self.pos[1]))
         else:
             # if chicken is dying then play the death animation
             frame = (io.ticks - self.died_at) / 100
             if frame < dead.count():
                 sprite = dead.frame(frame)
-                screen.blit(sprite, point(self.pos[0], self.pos[1]))
+                screen.blit(sprite, vec2(self.pos[0], self.pos[1]))

@@ -1,8 +1,15 @@
+# Your app's directory
+APP_DIR = "/system/apps/clock"
+
 import sys
 import os
 
-sys.path.insert(0, "/system/apps/clock")
-os.chdir("/system/apps/clock")
+# Standalone bootstrap for finding app assets
+os.chdir(APP_DIR)
+
+# Standalone bootstrap for module imports
+sys.path.insert(0, APP_DIR)
+
 
 from badgeware import run, State, rtc
 import time
@@ -302,18 +309,18 @@ def draw_sevenseg_clock(currenttime):
     seconds_y_start = 2
     seconds_xy_offset = digit_y - 4
     screen.shape(shape.custom([
-        point(seconds_x_start, seconds_y_start),
-        point(seconds_x_start + second_width, seconds_y_start),
-        point(seconds_x_start + second_width + seconds_xy_offset - seconds_y_start, seconds_xy_offset),
-        point(seconds_x_start + seconds_xy_offset - seconds_y_start, seconds_xy_offset)
+        vec2(seconds_x_start, seconds_y_start),
+        vec2(seconds_x_start + second_width, seconds_y_start),
+        vec2(seconds_x_start + second_width + seconds_xy_offset - seconds_y_start, seconds_xy_offset),
+        vec2(seconds_x_start + seconds_xy_offset - seconds_y_start, seconds_xy_offset)
     ]))
 
     # Draws the stripes increasing in thiccness until it gets to half way down the screen.
     while y <= screen.height / 2:
-        seg_path = [point(leftx, y),
-                    point(rightx, y),
-                    point(rightx + offset, y + offset),
-                    point(leftx + offset, y + offset)]
+        seg_path = [vec2(leftx, y),
+                    vec2(rightx, y),
+                    vec2(rightx + offset, y + offset),
+                    vec2(leftx + offset, y + offset)]
         seg = shape.custom(seg_path)
         screen.shape(seg)
         offset += 1
@@ -328,19 +335,19 @@ def draw_sevenseg_clock(currenttime):
     # Then the lower left bar for the seconds...
     seconds_x_start = leftx - seconds_spacing
     screen.shape(shape.custom([
-        point(seconds_x_start, screen.height - seconds_y_start),
-        point(seconds_x_start - second_width, screen.height - seconds_y_start),
-        point(seconds_x_start - second_width - seconds_xy_offset + seconds_y_start, screen.height - seconds_xy_offset),
-        point(seconds_x_start - seconds_xy_offset + seconds_y_start, screen.height - seconds_xy_offset)
+        vec2(seconds_x_start, screen.height - seconds_y_start),
+        vec2(seconds_x_start - second_width, screen.height - seconds_y_start),
+        vec2(seconds_x_start - second_width - seconds_xy_offset + seconds_y_start, screen.height - seconds_xy_offset),
+        vec2(seconds_x_start - seconds_xy_offset + seconds_y_start, screen.height - seconds_xy_offset)
     ]))
 
     # Just like above, draws stripes increasing in thiccness from the bottom of the screen.
     offset = 0
     while y >= 60:
-        seg_path = [point(leftx, y),
-                    point(rightx, y),
-                    point(rightx - offset, y - offset),
-                    point(leftx - offset, y - offset)]
+        seg_path = [vec2(leftx, y),
+                    vec2(rightx, y),
+                    vec2(rightx - offset, y - offset),
+                    vec2(leftx - offset, y - offset)]
         seg = shape.custom(seg_path)
         screen.shape(seg)
         offset += 1
@@ -357,9 +364,9 @@ def draw_sevenseg_clock(currenttime):
 
     # Quickly draw the dots in between the numerals, flashing every second
     if currenttime[5] % 2:
-        screen.blit(clock_dots.sprite(0, 0), point(76, digit_y))
+        screen.blit(clock_dots.sprite(0, 0), vec2(76, digit_y))
     else:
-        screen.blit(clock_dots.sprite(1, 0), point(76, digit_y))
+        screen.blit(clock_dots.sprite(1, 0), vec2(76, digit_y))
 
     # Then finally draw the digit sprites.
     hour = currenttime[3]
@@ -379,7 +386,7 @@ def draw_nixie_clock(currenttime):
         this_drawing_brush = drawing_brush
 
     # First draw the background
-    screen.blit(background, point(0, 0))
+    screen.blit(background, vec2(0, 0))
 
     # Then make up a string for the date and draw it.
     year = currenttime[0]
@@ -414,7 +421,7 @@ def draw_nixie_clock(currenttime):
     screen.shape(shape.rectangle(0, 102, second_width, 7))
 
     # Finally just draw the glass tube image over this bar.
-    screen.blit(foreground, point(0, 102))
+    screen.blit(foreground, vec2(0, 102))
 
 
 def draw_digits(hour, minute, spritesheet, center_offset, y_pos):
@@ -429,10 +436,10 @@ def draw_digits(hour, minute, spritesheet, center_offset, y_pos):
     minuteunits = minute % 10
 
     # ...and then use that to pick a sprite from the spritesheet of numerals.
-    screen.blit(spritesheet.sprite(hourtens, 0), point(0 - center_offset, y_pos))
-    screen.blit(spritesheet.sprite(hourunits, 0), point(40 - center_offset, y_pos))
-    screen.blit(spritesheet.sprite(minutetens, 0), point(80 + center_offset, y_pos))
-    screen.blit(spritesheet.sprite(minuteunits, 0), point(120 + center_offset, y_pos))
+    screen.blit(spritesheet.sprite(hourtens, 0), vec2(0 - center_offset, y_pos))
+    screen.blit(spritesheet.sprite(hourunits, 0), vec2(40 - center_offset, y_pos))
+    screen.blit(spritesheet.sprite(minutetens, 0), vec2(80 + center_offset, y_pos))
+    screen.blit(spritesheet.sprite(minuteunits, 0), vec2(120 + center_offset, y_pos))
 
 
 def draw_dot_row(y, width, total_dots, filled_dots, space_size, space_every):
@@ -686,11 +693,11 @@ def intro_screen():
     screen.font = textclock_font
     center_text("Welcome to Clock!", 3)
 
-    screen.blit(icons.sprite(0, 0), point(23, 104))
-    screen.blit(icons.sprite(1, 0), point(73, 104))
-    screen.blit(icons.sprite(2, 0), point(123, 104))
-    screen.blit(icons.sprite(3, 0), point(144, 27))
-    screen.blit(icons.sprite(4, 0), point(144, 77))
+    screen.blit(icons.sprite(0, 0), vec2(23, 104))
+    screen.blit(icons.sprite(1, 0), vec2(73, 104))
+    screen.blit(icons.sprite(2, 0), vec2(123, 104))
+    screen.blit(icons.sprite(3, 0), vec2(144, 27))
+    screen.blit(icons.sprite(4, 0), vec2(144, 77))
 
     screen.font = nixie_font
     center_text("Press any button", 40)

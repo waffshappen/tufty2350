@@ -41,8 +41,8 @@ def normalise(x, y):
 class Ball:
 
     def __init__(self, dx):
-        self.position = point(CX, CY)
-        self.direction = point(dx, 0.5)
+        self.position = vec2(CX, CY)
+        self.direction = vec2(dx, 0.5)
         self.w, self.h = 5, 5
         self.speed = 2
 
@@ -90,7 +90,7 @@ class Bat:
         self.player = player
 
         self.w, self.h = 6, 40
-        self.position = point(screen.width - self.w if self.player else 0, CY)
+        self.position = vec2(screen.width - self.w if self.player else 0, CY)
 
         self.score = 0
         self.timer = 0
