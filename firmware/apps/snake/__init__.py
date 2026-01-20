@@ -1,22 +1,26 @@
 import sys
 import os
+import math
+import random
+from badgeware import run
 
 sys.path.insert(0, "/system/apps/snake")
 os.chdir("/system/apps/snake")
 
-import math
-import random
-from badgeware import run
+from draw_tufty import Renderer
+
 
 class Platform:
     TUFTY = 1
     BADGER = 2
     BLINKY = 3
 
+
 class GameState:
     INTRO = 1
     PLAYING = 2
     GAME_OVER = 3
+
 
 # Dictionary to translate speed level to number of milliseconds between updates.
 speeds = {
@@ -38,10 +42,10 @@ game_speed = 1
 grid_size = 1
 score = 0
 
-from draw_tufty import *
 renderer = Renderer()
 
 timer = io.ticks
+
 
 # The Snake class stores the location and direction of the head,
 # as well as all of the body squares and the current length of the tail.
@@ -62,7 +66,7 @@ class Snake:
         if len(self.body) > self.tail:
             self.body.pop()
 
-    def detect_collision(self, x, y, include_head = False):
+    def detect_collision(self, x, y, include_head=False):
         if include_head:
             if self.x == x and self.y == y:
                 return True
@@ -72,6 +76,7 @@ class Snake:
             if segment[0] == x and segment[1] == y:
                 return True
         return False
+
 
 # The Apple class just stores a location for the apple,
 # as well as a method to randomise that location.
@@ -88,25 +93,36 @@ class Apple:
         if snake.detect_collision(self.x, self.y, True):
             self.relocate()
 
+
 snake = Snake()
 apple = Apple()
 
 newdirection = 0
+
 
 # Just detects buttons on the intro screen and sets settings appropriately
 def intro_controls():
     global game_speed, grid_size, state
 
     if io.BUTTON_A in io.pressed:
-        if game_speed > 1: game_speed -= 1
+        if game_speed > 1:
+            game_speed -= 1
+
     elif io.BUTTON_B in io.pressed:
         state = GameState.PLAYING
+
     elif io.BUTTON_C in io.pressed:
-        if game_speed < 9: game_speed += 1
+        if game_speed < 9:
+            game_speed += 1
+
     elif io.BUTTON_UP in io.pressed:
-        if grid_size < 5: grid_size += 1
+        if grid_size < 5:
+            grid_size += 1
+
     elif io.BUTTON_DOWN in io.pressed:
-        if grid_size > 1: grid_size -= 1
+        if grid_size > 1:
+            grid_size -= 1
+
 
 # Simple method to check for button presses and alter the snake's direction accordingly.
 def game_controls():
@@ -121,6 +137,7 @@ def game_controls():
     elif io.BUTTON_DOWN in io.pressed and snake.direction != 0:
         newdirection = 2
 
+
 # Changes the snake's head location based on its direction.
 def move_snake():
     global state, renderer, snake, apple, score, game_speed
@@ -134,10 +151,14 @@ def move_snake():
     elif snake.direction == 3:
         snake.x -= 1
 
-    if snake.x > renderer.X_CELLS - 1: snake.x = 0
-    if snake.x < 0: snake.x = renderer.X_CELLS - 1
-    if snake.y > renderer.Y_CELLS - 1: snake.y = 0
-    if snake.y < 0: snake.y = renderer.Y_CELLS - 1
+    if snake.x > renderer.X_CELLS - 1:
+        snake.x = 0
+    if snake.x < 0:
+        snake.x = renderer.X_CELLS - 1
+    if snake.y > renderer.Y_CELLS - 1:
+        snake.y = 0
+    if snake.y < 0:
+        snake.y = renderer.Y_CELLS - 1
 
     # This checks the snake's head location and if it's the same as the apple,
     # add one to the tail and score and relocate the apple.
@@ -155,6 +176,7 @@ def move_snake():
     # Checks if the new head position is on our own tail, and game-overs us if it is.
     if snake.detect_collision(snake.x, snake.y):
         state = GameState.GAME_OVER
+
 
 # The main loop switches behaviour depending on game state.
 def update():
@@ -189,6 +211,7 @@ def update():
             snake = Snake()
             state = GameState.INTRO
         renderer.draw_gameover()
+
 
 if __name__ == "__main__":
     run(update)

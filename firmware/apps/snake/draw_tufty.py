@@ -1,20 +1,26 @@
-from badgeware import SpriteSheet, PixelFont, Image, screen, run, io, brushes, shapes
 import math
+import sys
+import os
 
-small_font = PixelFont.load("/system/assets/fonts/memo.ppf")
-very_small_font = PixelFont.load("/system/assets/fonts/torch.ppf")
+sys.path.insert(0, "/system/apps/snake")
+os.chdir("/system/apps/snake")
 
-screen.antialias = Image.X2
+small_font = pixel_font.load("/system/assets/fonts/memo.ppf")
+very_small_font = pixel_font.load("/system/assets/fonts/torch.ppf")
 
-sqirl = SpriteSheet(f"assets/sqirl.png", 20, 1)
-acorn10 = Image.load(f"assets/acorn10.png")
-acorn15 = Image.load(f"assets/acorn15.png")
-acorn_multi = Image.load(f"assets/acorn_multi.png")
-background = Image.load(f"assets/bg.png")
+screen.antialias = image.X2
+
+sqirl = SpriteSheet("assets/sqirl.png", 20, 1)
+acorn10 = image.load("assets/acorn10.png")
+acorn15 = image.load("assets/acorn15.png")
+acorn_multi = image.load("assets/acorn_multi.png")
+background = image.load("assets/bg.png")
+
 
 def center_text(text, y):
-    w, h = screen.measure_text(text)
-    screen.text(text, 80 - (w / 2), y)
+    w, _ = screen.measure_text(text)
+    screen.text(text, (screen.width // 2) - (w / 2), y)
+
 
 class Renderer:
     def __init__(self):
@@ -46,7 +52,7 @@ class Renderer:
 
     def grid_to_screen_y(self, pos):
         return (pos * self.CELL_SIZE) + self.Y_OFFSET
-    
+
     # Given a queried cell and its neighbour, returns an int representing where the neighbour is in relation.
     # 0 = N, 1 = E, 2 = S, 3 = W
     def get_neighbour(self, current_cell_x, current_cell_y, neighbour_cell_x, neighbour_cell_y):
@@ -54,7 +60,7 @@ class Renderer:
             return 3
         elif neighbour_cell_x == current_cell_x + 1:
             return 1
-        elif neighbour_cell_x == 0 and current_cell_x == self.X_CELLS - 1: # Edge cases - literally. This and the next case deal with when you cross the edges of the playfield.
+        elif neighbour_cell_x == 0 and current_cell_x == self.X_CELLS - 1:  # Edge cases - literally. This and the next case deal with when you cross the edges of the playfield.
             return 1
         elif neighbour_cell_x == self.X_CELLS - 1 and current_cell_x == 0:
             return 3
@@ -63,12 +69,12 @@ class Renderer:
                 return 0
             elif neighbour_cell_y == current_cell_y + 1:
                 return 2
-            elif neighbour_cell_y == 0 and current_cell_y == self.Y_CELLS - 1: # See previous edge case.
+            elif neighbour_cell_y == 0 and current_cell_y == self.Y_CELLS - 1:  # See previous edge case.
                 return 2
             elif neighbour_cell_y == self.Y_CELLS - 1 and current_cell_y == 0:
                 return 0
-            
-        return 0 # you shouldn't be able to get here, if both the x and y are the same as yours then it's your square
+
+        return 0  # you shouldn't be able to get here, if both the x and y are the same as yours then it's your square
 
     # Returns the index of the correct sprite for a tail segment.
     def get_orientation(self, snake, index):
@@ -93,13 +99,17 @@ class Renderer:
         # ... and use that value to look up the right sprite.
         # If it's the last segment that's easy:
         if index == len(snake.body) - 1:
-            if prev_coord == 0: return 16
-            if prev_coord == 1: return 17
-            if prev_coord == 2: return 18
-            if prev_coord == 3: return 19
+            if prev_coord == 0:
+                return 16
+            if prev_coord == 1:
+                return 17
+            if prev_coord == 2:
+                return 18
+            if prev_coord == 3:
+                return 19
 
         # Otherwise we have to do the same for the next tail segment:
-        else:            
+        else:
             next_segment = snake.body[index + 1]
 
             next_x = next_segment[0]
@@ -110,27 +120,39 @@ class Renderer:
             # And then pick from the 12 different combinations of the tail entering and exiting the cell.
             # 4 different entry points, 3 different exit points (as it's game over if you enter and exit the same side).
             if prev_coord == 0:
-                if next_coord == 2 : return 4
-                if next_coord == 1 : return 8
-                if next_coord == 3 : return 15
+                if next_coord == 2:
+                    return 4
+                if next_coord == 1:
+                    return 8
+                if next_coord == 3:
+                    return 15
             elif prev_coord == 1:
-                if next_coord == 3 : return 5
-                if next_coord == 2 : return 9
-                if next_coord == 0 : return 12
+                if next_coord == 3:
+                    return 5
+                if next_coord == 2:
+                    return 9
+                if next_coord == 0:
+                    return 12
             elif prev_coord == 2:
-                if next_coord == 0 : return 6
-                if next_coord == 3 : return 10
-                if next_coord == 1 : return 13
+                if next_coord == 0:
+                    return 6
+                if next_coord == 3:
+                    return 10
+                if next_coord == 1:
+                    return 13
             else:
-                if next_coord == 1 : return 7
-                if next_coord == 0 : return 11
-                if next_coord == 2 : return 14
+                if next_coord == 1:
+                    return 7
+                if next_coord == 0:
+                    return 11
+                if next_coord == 2:
+                    return 14
 
         return 0
 
     # Drawing the intro is easy, we're just placing text and images.
     def draw_intro(self, game_speed, gridsize):
-        screen.brush = brushes.color(0, 255, 0)
+        screen.pen = color.rgb(0, 255, 0)
         screen.clear()
 
         self.GRIDLEVEL = gridsize
@@ -140,7 +162,7 @@ class Renderer:
         self.X_OFFSET = math.floor((self.WIDTH - (self.X_CELLS * self.CELL_SIZE)) / 2)
         self.Y_OFFSET = math.floor((self.HEIGHT - (self.Y_CELLS * self.CELL_SIZE)) / 2)
 
-        screen.brush = brushes.color(0, 0, 0)
+        screen.pen = color.rgb(0, 0, 0)
         screen.font = small_font
         center_text("Speed: " + str(game_speed), 65)
         center_text("Grid size: " + str(gridsize), 75)
@@ -153,30 +175,37 @@ class Renderer:
     # Drawing the playfield isn't much harder.
     def draw_play(self, snake, apple, score):
         # Setting the screen to black, then making a rectangle for the actual playfield.
-        screen.brush = brushes.color(0, 0, 0)
+        screen.pen = color.rgb(0, 0, 0)
         screen.clear()
-        screen.blit(background, 0, 0)
-        screen.brush = brushes.color(0, 0, 0, 128)
-        screen.draw(shapes.rectangle(self.X_OFFSET, self.Y_OFFSET, self.X_CELLS * self.CELL_SIZE, self.Y_CELLS * self.CELL_SIZE))
+        screen.blit(background, vec2(0, 0))
+        screen.pen = color.rgb(0, 0, 0, 128)
+        screen.shape(shape.rectangle(self.X_OFFSET, self.Y_OFFSET, self.X_CELLS * self.CELL_SIZE, self.Y_CELLS * self.CELL_SIZE))
 
         # First draw the snake's head, the direction also picks the sprite index
         head_dir = 0
-        if snake.direction == 0: head_dir = 0
-        if snake.direction == 1: head_dir = 1
-        if snake.direction == 2: head_dir = 2
-        if snake.direction == 3: head_dir = 3
+        if snake.direction == 0:
+            head_dir = 0
+        if snake.direction == 1:
+            head_dir = 1
+        if snake.direction == 2:
+            head_dir = 2
+        if snake.direction == 3:
+            head_dir = 3
         snake_head = sqirl.sprite(head_dir, 0)
-        screen.scale_blit(snake_head, self.grid_to_screen_x(snake.x), self.grid_to_screen_y(snake.y), self.CELL_SIZE, self.CELL_SIZE)
+        screen.blit(snake_head, rect(self.grid_to_screen_x(snake.x), self.grid_to_screen_y(snake.y), snake_head.width, snake_head.height),
+                    rect(self.grid_to_screen_x(snake.x), self.grid_to_screen_y(snake.y), self.CELL_SIZE, self.CELL_SIZE))
 
         # Then we loop through the body, using get_orientation to pick a sprite and then draw it
         for i in range(len(snake.body)):
             segment = snake.body[i]
             sprite_index = self.get_orientation(snake, i)
-            snake_body = sqirl.sprite(sprite_index,0)
-            screen.scale_blit(snake_body, self.grid_to_screen_x(segment[0]), self.grid_to_screen_y(segment[1]), self.CELL_SIZE, self.CELL_SIZE)
+            snake_body = sqirl.sprite(sprite_index, 0)
+            screen.blit(snake_body, rect(self.grid_to_screen_x(segment[0]), self.grid_to_screen_y(segment[1]), snake_body.width, snake_body.height),
+                        rect(self.grid_to_screen_x(segment[0]), self.grid_to_screen_y(segment[1]), self.CELL_SIZE, self.CELL_SIZE))
 
         # Draw the apple.
-        screen.scale_blit(acorn15, self.grid_to_screen_x(apple.x), self.grid_to_screen_y(apple.y), self.CELL_SIZE, self.CELL_SIZE)
+        screen.blit(acorn15, rect(self.grid_to_screen_x(apple.x), self.grid_to_screen_y(apple.y), acorn15.width, acorn15.height),
+                    rect(self.grid_to_screen_x(apple.x), self.grid_to_screen_y(apple.y), self.CELL_SIZE, self.CELL_SIZE))
 
         # Draw the score. This involves two loops,
         # since every ten points we want to smoosh them into a "tens" icon.
@@ -188,15 +217,15 @@ class Renderer:
 
         if score_tens > 0:
             for i in range(score_tens):
-                screen.blit(acorn_multi, scoreX, 109)
+                screen.blit(acorn_multi, vec2(scoreX, 109))
                 scoreX += 11
 
         if score_units > 0:
             for i in range(score_units):
-                screen.blit(acorn10, scoreX, 109)
+                screen.blit(acorn10, vec2(scoreX, 109))
                 scoreX += 11
 
     # Drawing the game over screen is again just images and text like the intro screen.
     def draw_gameover(self):
-        screen.brush = brushes.color(255, 0, 0)
+        screen.pen = color.rgb(255, 0, 0)
         screen.clear()
