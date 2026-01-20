@@ -423,14 +423,14 @@ def mode(mode, force=False):
     builtins.screen = image(*resolution, memoryview(display))
     screen.font = font if font is not None else DEFAULT_FONT
     screen.pen = brush if brush is not None else BG
-    picovector.default_target = screen
 
     return True
 
 
 def run(update, init=None, on_exit=None, auto_clear=True):
     screen.font = DEFAULT_FONT
-    screen.clear(BG)
+    screen.pen = BG
+    screen.clear()
     screen.pen = FG
     try:
         if init:
@@ -439,7 +439,8 @@ def run(update, init=None, on_exit=None, auto_clear=True):
         try:
             while True:
                 if auto_clear:
-                    screen.clear(BG)
+                    screen.pen = BG
+                    screen.clear()
                     screen.pen = FG
                 io.poll()
                 if (result := update()) is not None:
@@ -531,10 +532,22 @@ def fatal_error(title, error):
 
 
 def load_font(font_file):
-    try:
-        return pixel_font.load(font_file)
-    except OSError:
-        return pixel_font.load(f"/rom/fonts/{font_file}.ppf")
+    search_paths = ("/rom/fonts", "/system/assets/fonts", "/fonts", "/assets", "")
+    file = font_file
+
+    # Remove /rom/fonts if searching for .af files
+    if file.endswith(".af"):
+        search_paths = search_paths[1:]
+
+    extensions = (".af", ".ppf") if not file.endswith(".af") and not file.endswith(".ppf") else ("", )
+
+    for search_path in search_paths:
+        for ext in extensions:
+            path = search_path + f"/{file}{ext}"
+            if file_exists(path) and not is_dir(path):
+                return font.load(path) if path.endswith(".af") else pixel_font.load(path)
+
+    raise OSError(f"Font \"{font_file}\" not found!")
 
 
 class ROMFonts:
@@ -598,6 +611,17 @@ mode(LORES, True)
 # Build in some badgeware helpers, so we don't have to "bw.lores" etc
 for k in ("mode", "HIRES", "LORES", "SpriteSheet", "load_font", "rom_font", "text_tokenise", "text_draw"):
     setattr(builtins, k, locals()[k])
+
+
+# Temporary shim to keep "pen()" working
+def _pen(*args):
+    if len(args) in (3, 4):
+        screen.pen = color.rgb(*args)
+    else:
+        screen.pen = args[0]
+
+
+builtins.pen = _pen
 
 
 # Finally, build in badgeware as "bw" for less frequently used things
