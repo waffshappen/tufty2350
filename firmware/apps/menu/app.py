@@ -72,8 +72,8 @@ class App:
             if frame > (speed * 6):
                 self.spin = False
 
-        # transform to the icon position
-        squircle.transform = mat3().translate(self.pos.x, self.pos.y).scale(width, 1)
+        # transform to the icon position (TODO: Fix need to fudge position by .5 pixels for smoother squircle)
+        squircle.transform = mat3().translate(self.pos.x + 0.5, self.pos.y + 0.5).scale(width, 1)
 
         # draw the icon shading
         screen.pen = shade_brush
