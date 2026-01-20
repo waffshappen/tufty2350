@@ -13,7 +13,7 @@ sys.path.insert(0, APP_DIR)
 
 import math
 
-from badgeware import run
+from badgeware import run, fatal_error
 from breakout_bme280 import BreakoutBME280
 from breakout_ltr559 import BreakoutLTR559
 from lsm6ds3 import LSM6DS3, NORMAL_MODE_104HZ
@@ -27,19 +27,23 @@ font_winds = pixel_font.load("/system/assets/fonts/winds.ppf")
 
 screen.antialias = image.X2
 
-motion_sensor = LSM6DS3(I2C(), mode=NORMAL_MODE_104HZ)
-motion_samples = []
+try:
+    motion_sensor = LSM6DS3(I2C(), mode=NORMAL_MODE_104HZ)
+    temperature_sensor = BreakoutBME280(I2C())
+    light_sensor = BreakoutLTR559(I2C())
+except OSError:
+    while True:
+        fatal_error("Error!", "\nNo Multi Sensor Stick detected.\n\nMake sure the Multi Sensor Stick is connected to the I2C port on the back of your badge and run this app again.")
 
-temperature_sensor = BreakoutBME280(I2C())
+motion_samples = []
 graph = [25 for val in range(22)]
 last_graph = io.ticks
 
-light_sensor = BreakoutLTR559(I2C())
 light_samples = []
 LIGHT_MIN = 0
 LIGHT_MAX = 255
 
-# WIndow colours
+# Window colours
 TEMP_COLOUR = (190, 120, 120)
 LIGHT_COLOUR = (200, 200, 120)
 MOVE_COLOUR = (120, 170, 120)
@@ -324,23 +328,7 @@ class Widget:
             w._update()
 
 
-# Called once to initialise your app.
-def init():
-    global sensor
-
-    # Widget setup
-    temp_widget = Widget(w=114, title="Temperature", draw=draw_temperature)
-    light_widget = Widget(w=56, title="Light", draw=draw_light)
-    motion_widget = Widget(w=56, title="Move", draw=draw_motion)
-
-    temp_widget.colour_main = TEMP_COLOUR
-    light_widget.colour_main = LIGHT_COLOUR
-    motion_widget.colour_main = MOVE_COLOUR
-
-
-# Called every frame, update and render as you see fit!
-def update():
-    global sensor
+def draw_background():
 
     screen.pen = color.rgb(0, 0, 0)
     screen.clear()
@@ -367,6 +355,27 @@ def update():
     screen.pen = color.rgb(150, 150, 150)
     screen.shape(shape.circle(10, 40, 3))
     screen.shape(shape.circle(10, 100, 3))
+
+
+# Called once to initialise your app.
+def init():
+    global sensor
+
+    # Widget setup
+    temp_widget = Widget(w=114, title="Temperature", draw=draw_temperature)
+    light_widget = Widget(w=56, title="Light", draw=draw_light)
+    motion_widget = Widget(w=56, title="Move", draw=draw_motion)
+
+    temp_widget.colour_main = TEMP_COLOUR
+    light_widget.colour_main = LIGHT_COLOUR
+    motion_widget.colour_main = MOVE_COLOUR
+
+
+# Called every frame, update and render as you see fit!
+def update():
+    global sensor
+
+    draw_background()
 
     Widget.update()
 
