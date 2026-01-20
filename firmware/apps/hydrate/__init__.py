@@ -188,6 +188,8 @@ def update():
 
     draw_background()
     draw_graph(CX, CY - 8, 45, state["current"])
+    if show_menu:
+        screen.blur(0.5)
     draw_menu()
 
 
