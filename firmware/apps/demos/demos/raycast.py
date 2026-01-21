@@ -1,13 +1,12 @@
 from picovector import algorithm
 import math
 
-size = 20
-
+ 
 class Player:
   def __init__(self):
     self.pos = vec2(8, 8)
     self.angle = 0
-    self.fov = 110
+    self.fov = 100
 
   def set_angle(self, angle):
     self.angle = angle
@@ -18,99 +17,105 @@ class Player:
       math.sin((self.angle + offset) * (math.pi / 180)) * length
     )
 
-map = [
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-]
 
-def gtos(p):
-  return vec2(
-    160 + math.floor((p.x - player.pos.x) * size),
-    120 + math.floor((p.y - player.pos.y) * size),
-  )
-
-def point_add(p1, p2):
-  return vec2(
-    p1.x + p2.x,
-    p1.y + p2.y
-  )
-
-def map_value(x, y):
-  x = int(x)
-  y = int(y)
-  if 0 <= x < len(map[0]) and 0 <= y < len(map):
-    return map[y][x]
-  return 1
-
-def dda_cb(step, ip, ig, edge, offset, distance):
-  mv = map_value(ig.x, ig.y)
-
-  if mv == 1:
-    sip = gtos(ip)
-
-    b = 255 - (int(distance) * 10)
-    pen(0, 0, 255, b)
-    screen.line(gtos(player.pos), sip)
+world_map = bytearray((
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+))
 
 
-    sig = gtos(ig)
-    pen(255, 255, 255)
-    if edge == 0:
-      screen.line(sig.x, sig.y, sig.x + size, sig.y)
-    elif edge == 1:
-      screen.line(sig.x + size, sig.y, sig.x + size, sig.y + size)
-    elif edge == 2:
-      screen.line(sig.x, sig.y + size, sig.x + size, sig.y + size)
-    elif edge == 3:
-      screen.line(sig.x, sig.y, sig.x, sig.y + size)
+MAP_SIZE_X = 22
+MAP_SIZE_Y = 16
 
+if len(world_map) != MAP_SIZE_X * MAP_SIZE_Y:
+    raise RuntimeError("Invalid map size!")
 
-
-  return map_value(ig.x, ig.y) == 0
 
 player = Player()
+minimap_scale = 4 if screen.width == 320 else 2
+display_minimap = True
 
+
+minimap_map = image(MAP_SIZE_X * minimap_scale, MAP_SIZE_Y * minimap_scale)
+minimap_map.pen = color.rgb(25, 25, 25, 200)
+minimap_map.clear()
+minimap_map.pen = color.rgb(100, 100, 100, 100)
+for x in range(0, MAP_SIZE_X):
+    for y in range(0, MAP_SIZE_Y):
+      if world_map[int(y * MAP_SIZE_X + x)] == 1:
+        minimap_map.rectangle(x * minimap_scale, y * minimap_scale, minimap_scale, minimap_scale)
+
+minimap_overlay = image(MAP_SIZE_X * minimap_scale, MAP_SIZE_Y * minimap_scale)
+minimap_overlay_mv = memoryview(minimap_overlay)
+minimap_overlay_len = minimap_overlay.width * minimap_overlay.height
+
+
+@micropython.viper
+def clear(buf: ptr32, length: int):
+    for i in range(length):
+        buf[i] = 0
+
+
+d_proj = (screen.width / 2) / math.tan(player.fov * (math.pi / 180) / 2)
+
+
+@micropython.native
 def update():
-  global player
-  screen.clear(color.rgb(20, 40, 60))
-
   player.pos = vec2(
-    math.sin(io.ticks / 2000) * 3 + 8,
-    math.cos(io.ticks / 2000) * 3 + 8
+    math.sin(io.ticks / 2000) * 2 + 11,
+    math.cos(io.ticks / 2000) * 2 + 8
   )
   player.set_angle(io.ticks / 30)
 
+  if display_minimap:
+      # clear the minimap overlay to 0, 0, 0, 0
+      clear(minimap_overlay_mv, minimap_overlay_len)
+      
+      minimap_pos = player.pos * minimap_scale
 
+      minimap_overlay.pen = color.rgb(255, 255, 255)
+      minimap_overlay.circle(minimap_pos, 1)
+
+      minimap_overlay.pen = color.rgb(255, 255, 255, 150)
+      minimap_overlay.line(minimap_pos, minimap_pos + player.vector(offset = -player.fov / 2, length=2.5 * minimap_scale))
+      minimap_overlay.line(minimap_pos, minimap_pos + player.vector(offset = player.fov / 2, length=2.5 * minimap_scale))
+
+  # draw the sky
+  screen.pen = color.rgb(128, 128, 255)
+  screen.rectangle(0, 0, screen.width, screen.height / 2)
 
   # cast rays for player sight
-  for fova in range(-player.fov / 2, player.fov / 2):
-    algorithm.dda(player.pos, player.vector(offset = fova), dda_cb)
+  num_rays = screen.width
+  result = algorithm.dda(player.pos, player.angle, player.fov, num_rays, 20, world_map, MAP_SIZE_X, MAP_SIZE_Y)
 
-  # draw player position
-  pen(255, 255, 255)
-  screen.circle(gtos(player.pos), 3)
+  for screen_x, ray in enumerate(result):
+    for (tile_id, cb_p, cb_g, edge, offset, distance) in ray:
+      if tile_id == 1:
+          height = (2 / distance) * d_proj
+          b = min(255, distance * 20)
+          screen.pen = color.rgb(255 - b, 255 - b, 255 - b)
+          screen.rectangle(screen_x, (screen.height / 2) - (height / 2), 1, height)
 
-  pen(255, 255, 255)
-  screen.line(gtos(player.pos), gtos(player.pos + player.vector(length=100)))
+          if display_minimap:
+            minimap_overlay.pen = color.rgb(255, 255, 255, b)
+            minimap_overlay.put(cb_p * minimap_scale)
+          break
 
-
-  pen(100, 100, 100, 100)
-  for x in range(0, len(map[0])):
-    for y in range(0, len(map)):
-      sp = gtos(vec2(x, y))
-      if map_value(x, y) == 1:
-        screen.rectangle(sp.x, sp.y, size, size)
+  if display_minimap:
+    # draw the minimap over the top
+    screen.blit(minimap_map, vec2(screen.width - minimap_map.width, screen.height - minimap_map.height))
+    screen.blit(minimap_overlay, vec2(screen.width - minimap_overlay.width, screen.height - minimap_overlay.height))

@@ -6,12 +6,8 @@ size = 24
 
 def update():
   global size
-  #screen.font = pixel_font.load("/system/assets/fonts/nope.ppf")
   screen.font = mona_sans
-
-  screen.antialias = 2
-
-  screen.clear(color.rgb(20, 40, 60))
+  screen.antialias = image.X2
 
   i = round(io.ticks / 200)
   i %= 10
@@ -24,7 +20,7 @@ Once I roared with breath and [pen:255,100,80]flame[pen:180,150,120], Now legend
 [skull:]
 """
 
-  pen(100, 255, 100, 150)
+  screen.pen = color.rgb(100, 255, 100, 150)
 
   x = 10
   y = 10
@@ -35,7 +31,7 @@ Once I roared with breath and [pen:255,100,80]flame[pen:180,150,120], Now legend
   measure(screen, tokens, bounds, line_spacing=1, word_spacing=1.05)
   import time
 
-  pen(60, 80, 100, 100)
+  screen.pen = color.rgb(60, 80, 100, 100)
   screen.line(bounds.x, bounds.y, bounds.x + bounds.w, bounds.y)
   screen.line(bounds.x, bounds.y, bounds.x, bounds.y + bounds.h)
   screen.line(bounds.x, bounds.y + bounds.h, bounds.x + bounds.w, bounds.y + bounds.h)
@@ -51,7 +47,7 @@ def pen_glyph_renderer(image, parameters, cursor, measure):
   r = int(parameters[0])
   g = int(parameters[1])
   b = int(parameters[2])
-  pen(r, g, b)
+  image.pen = color.rgb(r, g, b)
 
 def skull_glyph_renderer(image, parameters, cursor, measure):
   if measure:

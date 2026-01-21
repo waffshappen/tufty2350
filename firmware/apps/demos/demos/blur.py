@@ -1,8 +1,6 @@
 import math, random
 
 def update():
-  pen(color.rgb(150,190, 160))
-
   random.seed(1)
 
   for i in range(0, 20):

@@ -52,6 +52,10 @@ def get_case_led(led=None):
     return _CASE_LIGHTS[led].duty_u16() / 65535
 
 
+def set_brightness(value):
+    display.backlight(value)
+
+
 def get_light():
     # TODO: Returning the raw u16 is a little meh here, can we do an approx lux conversion?
     return LIGHT_SENSOR.read_u16()
@@ -78,10 +82,10 @@ def time_from_ntp():
 def pen_glyph_renderer(image, parameters, cursor, measure):
     if measure:
         return 0
-    pen(*(int(c) for c in parameters))
+    image.pen = color.rgb(*(int(c) for c in parameters))
 
 
-def text_tokenise(image, text, glyph_renderers=None):
+def text_tokenise(image, text, glyph_renderers=None, size=24):
     WORD = 1
     SPACE = 2
     LINE_BREAK = 3
@@ -115,13 +119,22 @@ def text_tokenise(image, text, glyph_renderers=None):
 
             i += 1
 
-            # search for the next space
-            end = line.find(" ", start)
-            if end == -1: end = len(line)
+            # search for the next space or glyph
+            next_space = line.find(" ", start)
+            next_glyph = line.find("[", start + 1)
+
+            end = min(next_space, next_glyph)
+            if end == -1:
+                end = max(next_space, next_glyph)
+            if end == -1:
+                end = len(line)
 
             # measure the text up to the space
             if end > start:
-                width, _ = image.measure_text(line[start:end])
+                if isinstance(image.font, font):
+                    width, _ = image.measure_text(line[start:end], size)
+                else:
+                    width, _ = image.measure_text(line[start:end])
                 tokens.append((WORD, width, line[start:end]))
 
             start = end
@@ -134,7 +147,7 @@ def text_tokenise(image, text, glyph_renderers=None):
     return tokens
 
 
-def text_draw(image, text, bounds=None, line_spacing=1, word_spacing=1):
+def text_draw(image, text, bounds=None, line_spacing=1, word_spacing=1, size=24):
     WORD = 1
     SPACE = 2
     LINE_BREAK = 3
@@ -145,7 +158,7 @@ def text_draw(image, text, bounds=None, line_spacing=1, word_spacing=1):
         bounds = rect(int(bounds.x), int(bounds.y), int(bounds.w), int(bounds.h))
 
     if isinstance(text, str):
-        tokens = text_tokenise(image, text)
+        tokens = text_tokenise(image, text, size=size)
     else:
         tokens = text
 
@@ -155,21 +168,25 @@ def text_draw(image, text, bounds=None, line_spacing=1, word_spacing=1):
     c = vec2(bounds.x, bounds.y)
     b = rect()
     for token in tokens:
+        font_height = size if isinstance(image.font, font) else image.font.height
         if token[0] == WORD:
             if c.x + token[1] > bounds.x + bounds.w:
                 c.x = bounds.x
-                c.y += image.font.height * line_spacing
-            image.text(token[2], c.x, c.y)
+                c.y += font_height * line_spacing
+            if isinstance(image.font, font):
+                image.text(token[2], c.x, c.y, size)
+            else:
+                image.text(token[2], c.x, c.y)
             c.x += token[1]
         elif token[0] == SPACE:
-            c.x += (image.font.height / 3) * word_spacing
+            c.x += (font_height / 3) * word_spacing
         elif token[0] == LINE_BREAK:
             c.x = bounds.x
-            c.y += image.font.height * line_spacing
+            c.y += font_height * line_spacing
         else:
             if c.x + token[1] > bounds.x + bounds.w:
                 c.x = bounds.x
-                c.y += image.font.height * line_spacing
+                c.y += font_height * line_spacing
 
             token[0](image, token[2], c, False)
             c.x += token[1]
@@ -609,8 +626,8 @@ mode(LORES, True)
 
 
 # Build in some badgeware helpers, so we don't have to "bw.lores" etc
-for k in ("mode", "HIRES", "LORES", "SpriteSheet", "load_font", "rom_font", "text_tokenise", "text_draw"):
-    setattr(builtins, k, locals()[k])
+for k in ("mode", "HIRES", "LORES", "SpriteSheet", "load_font", "rom_font", "text_tokenise", "text_draw", "clamp", "rnd", "frnd"):
+    setattr(builtins, k, locals()[k])  # noqa: B010
 
 
 # Temporary shim to keep "pen()" working

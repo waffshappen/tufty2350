@@ -87,13 +87,9 @@ def update():
       screen.text(name, 5, y)
 
 
-#if __name__ == "__main__":
-#    run(update)
-    
 if __name__ == "__main__":
     AVERAGE_OVER = 60
     SAMPLE_COUNT = 5
-        
 
     frames = 0
     total = 0
@@ -109,6 +105,7 @@ if __name__ == "__main__":
         screen.pen = BG
         screen.clear()
         io.poll()
+
         t_start = time.ticks_ms()
         next_test = update()
         diff = time.ticks_diff(time.ticks_ms(), t_start)

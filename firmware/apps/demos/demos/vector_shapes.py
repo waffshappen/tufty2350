@@ -1,9 +1,8 @@
 import math
 
-screen.antialias = image.X4
 
 def update():
-  screen.clear(color.rgb(20, 40, 60))
+  screen.antialias = image.X4
 
   i = math.sin(io.ticks / 2000) * 0.2 + 0.5
   f = math.sin(io.ticks / 1000) * 150
@@ -39,7 +38,7 @@ def update():
       scale = ((math.sin((io.ticks + i * 2000) / 1000) + 1) * 3) + 5
 
       if i < len(shapes):
-        pen(color.oklch(220, 128, i * 20, 150))
+        screen.pen = color.oklch(220, 128, i * 20, 150)
 
         shapes[i].transform = mat3().translate(x * 36 + 25, y * 26 + 20).rotate(io.ticks / 100).scale(scale)
         screen.shape(shapes[i])
