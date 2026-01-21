@@ -71,14 +71,17 @@ class Pet:
     x -= abs(width / 2)
     y -= height + floating
 
+    y = int(y / 4) * 4
+    x = int(x / 4) * 4
+
     # draw pet
     alpha = 150 if self._mood == "dead" else 255
     image.alpha = alpha
     screen.blit(image, rect(x, y, width, height))
 
     # draw pets reflection
-    image.alpha = int(alpha * 0.2)
-    screen.blit(image, rect(x, self._position[1] + (floating / 2) + 1, width, -20))
+    #image.alpha = int(alpha * 0.2)
+    screen.blit(image, rect(x, self._position[1] + (floating / 2) + 1, width, -10))
     image.alpha = 255
 
   # set a new target position for pet to move to
@@ -168,6 +171,7 @@ animations = {
   "dead":     6
 
 }
+
 
 # load the spritesheets for pets animations
 for name, frame_count in animations.items():

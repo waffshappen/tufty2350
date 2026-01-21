@@ -1,7 +1,7 @@
 from picovector import algorithm
 import math
 
- 
+
 class Player:
   def __init__(self):
     self.pos = vec2(8, 8)
@@ -55,9 +55,9 @@ minimap_map.pen = color.rgb(25, 25, 25, 200)
 minimap_map.clear()
 minimap_map.pen = color.rgb(100, 100, 100, 100)
 for x in range(0, MAP_SIZE_X):
-    for y in range(0, MAP_SIZE_Y):
-      if world_map[int(y * MAP_SIZE_X + x)] == 1:
-        minimap_map.rectangle(x * minimap_scale, y * minimap_scale, minimap_scale, minimap_scale)
+  for y in range(0, MAP_SIZE_Y):
+    if world_map[int(y * MAP_SIZE_X + x)] == 1:
+      minimap_map.rectangle(x * minimap_scale, y * minimap_scale, minimap_scale, minimap_scale)
 
 minimap_overlay = image(MAP_SIZE_X * minimap_scale, MAP_SIZE_Y * minimap_scale)
 minimap_overlay_mv = memoryview(minimap_overlay)
@@ -66,8 +66,8 @@ minimap_overlay_len = minimap_overlay.width * minimap_overlay.height
 
 @micropython.viper
 def clear(buf: ptr32, length: int):
-    for i in range(length):
-        buf[i] = 0
+  for i in range(length):
+    buf[i] = 0
 
 
 d_proj = (screen.width / 2) / math.tan(player.fov * (math.pi / 180) / 2)
@@ -82,17 +82,17 @@ def update():
   player.set_angle(io.ticks / 30)
 
   if display_minimap:
-      # clear the minimap overlay to 0, 0, 0, 0
-      clear(minimap_overlay_mv, minimap_overlay_len)
-      
-      minimap_pos = player.pos * minimap_scale
+    # clear the minimap overlay to 0, 0, 0, 0
+    clear(minimap_overlay_mv, minimap_overlay_len)
 
-      minimap_overlay.pen = color.rgb(255, 255, 255)
-      minimap_overlay.circle(minimap_pos, 1)
+    minimap_pos = player.pos * minimap_scale
 
-      minimap_overlay.pen = color.rgb(255, 255, 255, 150)
-      minimap_overlay.line(minimap_pos, minimap_pos + player.vector(offset = -player.fov / 2, length=2.5 * minimap_scale))
-      minimap_overlay.line(minimap_pos, minimap_pos + player.vector(offset = player.fov / 2, length=2.5 * minimap_scale))
+    minimap_overlay.pen = color.rgb(255, 255, 255)
+    minimap_overlay.circle(minimap_pos, 1)
+
+    minimap_overlay.pen = color.rgb(255, 255, 255, 150)
+    minimap_overlay.line(minimap_pos, minimap_pos + player.vector(offset = -player.fov / 2, length=2.5 * minimap_scale))
+    minimap_overlay.line(minimap_pos, minimap_pos + player.vector(offset = player.fov / 2, length=2.5 * minimap_scale))
 
   # draw the sky
   screen.pen = color.rgb(128, 128, 255)

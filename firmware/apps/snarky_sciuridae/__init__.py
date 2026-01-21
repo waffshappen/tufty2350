@@ -20,6 +20,8 @@ happiness_duration = 1800
 hunger_duration = 1200
 cleanliness_duration = 2400
 
+screen.antialias = image.X2
+
 
 def game_update():
     global pet
