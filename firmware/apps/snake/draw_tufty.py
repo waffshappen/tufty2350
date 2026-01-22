@@ -5,8 +5,8 @@ import os
 sys.path.insert(0, "/system/apps/snake")
 os.chdir("/system/apps/snake")
 
-small_font = pixel_font.load("/system/assets/fonts/memo.ppf")
-very_small_font = pixel_font.load("/system/assets/fonts/torch.ppf")
+small_font = rom_font.nope
+very_small_font = rom_font.sins
 
 screen.antialias = image.X2
 
@@ -152,8 +152,8 @@ class Renderer:
 
     # Drawing the intro is easy, we're just placing text and images.
     def draw_intro(self, game_speed, gridsize):
-        screen.pen = color.rgb(0, 255, 0)
-        screen.clear()
+        bg = image.load("assets/title.png")
+        screen.blit(bg, vec2(0, 0))
 
         self.GRIDLEVEL = gridsize
         self.Y_CELLS = self.grids[self.GRIDLEVEL]
@@ -162,15 +162,15 @@ class Renderer:
         self.X_OFFSET = math.floor((self.WIDTH - (self.X_CELLS * self.CELL_SIZE)) / 2)
         self.Y_OFFSET = math.floor((self.HEIGHT - (self.Y_CELLS * self.CELL_SIZE)) / 2)
 
-        screen.pen = color.rgb(0, 0, 0)
-        screen.font = small_font
-        center_text("Speed: " + str(game_speed), 65)
-        center_text("Grid size: " + str(gridsize), 75)
+        screen.pen = color.white
+
+        if int(io.ticks / 500) % 2:
+            screen.font = small_font
+            center_text("Press B to start", 10)
 
         screen.font = very_small_font
-        center_text("Press B to start", 95)
-        center_text("A/C to change speed", 102)
-        center_text("U/D to change grid size", 109)
+        center_text(f"A/C to change speed ({game_speed})", 25)
+        center_text(f"U/D to change grid size ({gridsize})", 35)
 
     # Drawing the playfield isn't much harder.
     def draw_play(self, snake, apple, score):
@@ -192,20 +192,17 @@ class Renderer:
         if snake.direction == 3:
             head_dir = 3
         snake_head = sqirl.sprite(head_dir, 0)
-        screen.blit(snake_head, rect(self.grid_to_screen_x(snake.x), self.grid_to_screen_y(snake.y), snake_head.width, snake_head.height),
-                    rect(self.grid_to_screen_x(snake.x), self.grid_to_screen_y(snake.y), self.CELL_SIZE, self.CELL_SIZE))
+        screen.blit(snake_head, rect(self.grid_to_screen_x(snake.x), self.grid_to_screen_y(snake.y), self.CELL_SIZE, self.CELL_SIZE))
 
         # Then we loop through the body, using get_orientation to pick a sprite and then draw it
         for i in range(len(snake.body)):
             segment = snake.body[i]
             sprite_index = self.get_orientation(snake, i)
             snake_body = sqirl.sprite(sprite_index, 0)
-            screen.blit(snake_body, rect(self.grid_to_screen_x(segment[0]), self.grid_to_screen_y(segment[1]), snake_body.width, snake_body.height),
-                        rect(self.grid_to_screen_x(segment[0]), self.grid_to_screen_y(segment[1]), self.CELL_SIZE, self.CELL_SIZE))
+            screen.blit(snake_body, rect(self.grid_to_screen_x(segment[0]), self.grid_to_screen_y(segment[1]), self.CELL_SIZE, self.CELL_SIZE))
 
         # Draw the apple.
-        screen.blit(acorn15, rect(self.grid_to_screen_x(apple.x), self.grid_to_screen_y(apple.y), acorn15.width, acorn15.height),
-                    rect(self.grid_to_screen_x(apple.x), self.grid_to_screen_y(apple.y), self.CELL_SIZE, self.CELL_SIZE))
+        screen.blit(acorn15, rect(self.grid_to_screen_x(apple.x), self.grid_to_screen_y(apple.y), self.CELL_SIZE, self.CELL_SIZE))
 
         # Draw the score. This involves two loops,
         # since every ten points we want to smoosh them into a "tens" icon.
@@ -227,5 +224,12 @@ class Renderer:
 
     # Drawing the game over screen is again just images and text like the intro screen.
     def draw_gameover(self):
-        screen.pen = color.rgb(255, 0, 0)
-        screen.clear()
+
+        bg = image.load("assets/gameover.png")
+        screen.blit(bg, vec2(0, 0))
+
+        screen.pen = color.white
+
+        if int(io.ticks / 500) % 2:
+            screen.font = small_font
+            center_text("Press B to play again", screen.height - 20)

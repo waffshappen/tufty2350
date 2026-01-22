@@ -3,11 +3,10 @@ import os
 import math
 import random
 from badgeware import run
+from draw_tufty import Renderer
 
 sys.path.insert(0, "/system/apps/snake")
 os.chdir("/system/apps/snake")
-
-from draw_tufty import Renderer
 
 
 class Platform:
