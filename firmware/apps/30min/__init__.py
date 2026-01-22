@@ -464,23 +464,7 @@ def update():
 
         intro_cutscene.draw()
 
-        if io.BUTTON_A in io.pressed:
-            if not intro_cutscene.advance():
-                game_state = GameState.PLAYING
-                level_start_time = time.ticks_ms()
-        elif io.BUTTON_C in io.pressed:
-            if not intro_cutscene.advance():
-                game_state = GameState.PLAYING
-                level_start_time = time.ticks_ms()
-        if io.BUTTON_DOWN in io.pressed:
-            if not intro_cutscene.advance():
-                game_state = GameState.PLAYING
-                level_start_time = time.ticks_ms()
-        if io.BUTTON_UP in io.pressed:
-            if not intro_cutscene.advance():
-                game_state = GameState.PLAYING
-                level_start_time = time.ticks_ms()
-        if io.BUTTON_B in io.pressed:
+        if io.pressed:
             if not intro_cutscene.advance():
                 game_state = GameState.PLAYING
                 level_start_time = time.ticks_ms()
@@ -578,19 +562,7 @@ def update():
         static = random.randint(0, 4)
         screen.blit(game_over.sprite(static, 0), rect(0, 0, screen.width, screen.height))
 
-        if io.BUTTON_A in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        elif io.BUTTON_C in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        if io.BUTTON_DOWN in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        if io.BUTTON_UP in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        if io.BUTTON_B in io.pressed:
+        if io.pressed:
             init_game()
             game_state = GameState.INTRO
 
@@ -627,19 +599,7 @@ def update():
         w, _ = screen.measure_text(time_text)
         screen.text(time_text, vec2((screen.width - w) / 2, 90))
 
-        if io.BUTTON_A in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        elif io.BUTTON_C in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        if io.BUTTON_DOWN in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        if io.BUTTON_UP in io.pressed:
-            init_game()
-            game_state = GameState.INTRO
-        if io.BUTTON_B in io.pressed:
+        if io.pressed:
             init_game()
             game_state = GameState.INTRO
 
