@@ -1,4 +1,5 @@
-import math, json, gc
+import math
+import json
 
 coastlines = []
 

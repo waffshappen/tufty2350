@@ -1,4 +1,5 @@
-import math, random
+import math
+import random
 
 def update():
   random.seed(0)

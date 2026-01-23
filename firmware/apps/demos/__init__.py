@@ -11,7 +11,8 @@ from badgeware import run, BG
 mode(LORES)
 
 
-import gc, sys
+import gc
+import sys
 
 sins = rom_font.sins
 
@@ -66,7 +67,7 @@ def update():
     menu_index -= (menu_index - selected) / 20
 
   # render 5 items above the current item, and 1 below, fade out from current
-  for i in range(0, len(names)):
+  for i in range(len(names)):
     name = names[i]
 
     y = 102 + (i * 10) - menu_index * 10

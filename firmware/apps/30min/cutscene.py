@@ -80,8 +80,7 @@ class Cutscene:
         self.index += 1
         if self.index >= len(self.screens):
             return False
-        else:
-            return True
+        return True
 
     def draw(self):
         screen_image = image.load(f"assets/{self.screens[self.index].image}.png")

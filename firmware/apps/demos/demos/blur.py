@@ -1,9 +1,10 @@
-import math, random
+import math
+import random
 
 def update():
   random.seed(1)
 
-  for i in range(0, 20):
+  for i in range(20):
     x = random.uniform(-5, 5)
     y = random.uniform(-5, 5)
     s = random.uniform(0.5, 2)

@@ -54,8 +54,8 @@ minimap_map = image(MAP_SIZE_X * minimap_scale, MAP_SIZE_Y * minimap_scale)
 minimap_map.pen = color.rgb(25, 25, 25, 200)
 minimap_map.clear()
 minimap_map.pen = color.rgb(100, 100, 100, 100)
-for x in range(0, MAP_SIZE_X):
-  for y in range(0, MAP_SIZE_Y):
+for x in range(MAP_SIZE_X):
+  for y in range(MAP_SIZE_Y):
     if world_map[int(y * MAP_SIZE_X + x)] == 1:
       minimap_map.rectangle(x * minimap_scale, y * minimap_scale, minimap_scale, minimap_scale)
 

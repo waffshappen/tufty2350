@@ -58,21 +58,20 @@ class Renderer:
     def get_neighbour(self, current_cell_x, current_cell_y, neighbour_cell_x, neighbour_cell_y):
         if neighbour_cell_x == current_cell_x - 1:
             return 3
-        elif neighbour_cell_x == current_cell_x + 1:
+        if neighbour_cell_x == current_cell_x + 1:
             return 1
-        elif neighbour_cell_x == 0 and current_cell_x == self.X_CELLS - 1:  # Edge cases - literally. This and the next case deal with when you cross the edges of the playfield.
+        if neighbour_cell_x == 0 and current_cell_x == self.X_CELLS - 1:  # Edge cases - literally. This and the next case deal with when you cross the edges of the playfield.
             return 1
-        elif neighbour_cell_x == self.X_CELLS - 1 and current_cell_x == 0:
+        if neighbour_cell_x == self.X_CELLS - 1 and current_cell_x == 0:
             return 3
-        else:
-            if neighbour_cell_y == current_cell_y - 1:
-                return 0
-            elif neighbour_cell_y == current_cell_y + 1:
-                return 2
-            elif neighbour_cell_y == 0 and current_cell_y == self.Y_CELLS - 1:  # See previous edge case.
-                return 2
-            elif neighbour_cell_y == self.Y_CELLS - 1 and current_cell_y == 0:
-                return 0
+        if neighbour_cell_y == current_cell_y - 1:
+            return 0
+        if neighbour_cell_y == current_cell_y + 1:
+            return 2
+        if neighbour_cell_y == 0 and current_cell_y == self.Y_CELLS - 1:  # See previous edge case.
+            return 2
+        if neighbour_cell_y == self.Y_CELLS - 1 and current_cell_y == 0:
+            return 0
 
         return 0  # you shouldn't be able to get here, if both the x and y are the same as yours then it's your square
 

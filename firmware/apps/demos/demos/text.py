@@ -27,7 +27,7 @@ def circle_glyph_renderer(image, parameters, cursor, measure):
   image.shape(shape.circle(cursor.x + 6, cursor.y + 7, 6))
 
 
-nope = pixel_font.load(f"/system/assets/fonts/nope.ppf")
+nope = pixel_font.load("/system/assets/fonts/nope.ppf")
 
 
 glyph_renderers = {
@@ -41,7 +41,7 @@ def update():
   i = round(io.ticks / 200)
   i %= 10
 
-  message = f"""[pen:180,150,120]Upon the mast I gleam and grin, A sentinel of bone and sin. Wind and thunder, night and hull- None fear the sea like a [pen:230,220,200]pirate skull[pen:180,150,120][skull].
+  message = """[pen:180,150,120]Upon the mast I gleam and grin, A sentinel of bone and sin. Wind and thunder, night and hull- None fear the sea like a [pen:230,220,200]pirate skull[pen:180,150,120][skull].
 """
 
   screen.pen = color.rgb(100, 255, 100, 150)

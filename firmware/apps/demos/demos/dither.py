@@ -1,9 +1,9 @@
-import math, random
+import random
 
 def update():
   random.seed(1)
 
-  for i in range(0, 20):
+  for i in range(20):
     screen.pen = color.rgb(i * 10,  i * 10 , i * 10)
     x = random.uniform(-5, 5)
     y = random.uniform(-5, 5)
