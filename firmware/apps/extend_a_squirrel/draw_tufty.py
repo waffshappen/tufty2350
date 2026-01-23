@@ -2,8 +2,8 @@ import math
 import sys
 import os
 
-sys.path.insert(0, "/system/apps/snake")
-os.chdir("/system/apps/snake")
+sys.path.insert(0, "/system/apps/extend_a_squirrel")
+os.chdir("/system/apps/extend_a_squirrel")
 
 small_font = rom_font.nope
 very_small_font = rom_font.sins

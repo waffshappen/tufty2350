@@ -5,8 +5,8 @@ import random
 from badgeware import run
 from draw_tufty import Renderer
 
-sys.path.insert(0, "/system/apps/snake")
-os.chdir("/system/apps/snake")
+sys.path.insert(0, "/system/apps/extend_a_squirrel")
+os.chdir("/system/apps/extend_a_squirrel")
 
 
 class Platform:
