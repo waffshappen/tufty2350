@@ -596,6 +596,7 @@ def fatal_error(title, error):
         io.poll()
         if io.pressed:
             break
+        time.sleep(0.001)
     while io.pressed:
         io.poll()
 
