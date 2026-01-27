@@ -21,6 +21,7 @@ active = 0
 MAX_ALPHA = 255
 alpha = 30
 
+io.poll()
 
 def update():
     global active, apps, alpha
