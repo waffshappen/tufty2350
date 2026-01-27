@@ -6,6 +6,7 @@ import st7789
 from machine import ADC, I2C, Pin, Timer
 from pcf85063a import PCF85063A
 import gc
+import os
 
 display = st7789.ST7789()
 
@@ -211,8 +212,7 @@ class Tests:
     def clear_flag(self):
         # Now the test has complete, we can remove the flag.
         try:
-            pass
-            # os.remove("hardware_test.txt")
+            os.remove("hardware_test.txt")
         except OSError:
             pass
 
